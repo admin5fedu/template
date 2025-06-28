@@ -160,10 +160,9 @@
             // Function to format numbers as Vietnamese currency (VND)
             function formatCurrency(amount) {
                 if (typeof amount !== 'number') {
-                    // Try to convert if it's a string that looks like a number
                     amount = parseFloat(amount);
                     if (isNaN(amount)) {
-                        return ''; // Return empty string if not a valid number
+                        return '';
                     }
                 }
                 return amount.toLocaleString('vi-VN') + ' VNĐ';
@@ -176,50 +175,9 @@
                 const nam = params.nam;
                 const thang = params.thang;
 
-                // --- IMPORTANT: Replace this with your actual Google Apps Script Web App URL ---
-                // Example: https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
-                // Your Apps Script should accept 'mnv', 'nam', 'thang' as query parameters
-                // and return JSON data as structured below.
+                // --- QUAN TRỌNG: Thay thế URL này bằng URL Web App Google Apps Script thực tế của bạn ---
+                // Google Apps Script Web App của bạn cần được triển khai và trả về JSON theo cấu trúc mong đợi.
                 const jsonApiUrl = `https://your-google-apps-script-web-app-url/exec?mnv=${mnv}&nam=${nam}&thang=${thang}`;
-
-                // --- FOR DEMO/TESTING: Remove this block when using your actual API ---
-                // If you want to test without an actual API, uncomment the mockData block.
-                // This mock data simulates the structure the API should return.
-                let mockData = null;
-                if (mnv === 'NV001' && nam === '2025' && thang === '06') {
-                    mockData = {
-                        "mnv": "NV001",
-                        "hoTen": "Nguyễn Văn A",
-                        "phongBan": "Phòng Kinh doanh",
-                        "chucVu": "Nhân viên kinh doanh",
-                        "thang": "06",
-                        "nam": "2025",
-                        "ngayCong": 22,
-                        "luongCoBan": 10000000,
-                        "phuCap": 1500000,
-                        "thuong": 500000,
-                        "phat": 200000,
-                        "luongThucLanh": 11800000,
-                        "ghiChu": "Phiếu lương này chỉ có giá trị nội bộ. Vui lòng kiểm tra kỹ trước khi xác nhận."
-                    };
-                } else if (mnv === 'NV002' && nam === '2025' && thang === '06') {
-                    mockData = {
-                        "mnv": "NV002",
-                        "hoTen": "Trần Thị B",
-                        "phongBan": "Phòng Marketing",
-                        "chucVu": "Trưởng phòng",
-                        "thang": "06",
-                        "nam": "2025",
-                        "ngayCong": 20,
-                        "luongCoBan": 18000000,
-                        "phuCap": 2000000,
-                        "thuong": 1000000,
-                        "phat": 0,
-                        "luongThucLanh": 21000000,
-                        "ghiChu": "Đã hoàn thành tốt dự án X."
-                    };
-                }
-                // --- END OF DEMO/TESTING BLOCK ---
 
                 if (!mnv || !nam || !thang) {
                     errorMessage.textContent = 'Vui lòng cung cấp Mã NV, Năm và Tháng trên URL (ví dụ: ?mnv=NV001&nam=2025&thang=06)';
@@ -227,35 +185,33 @@
                     return;
                 }
 
-                loadingMessage.classList.remove('hidden'); // Show loading message
-                errorMessage.classList.add('hidden'); // Hide any previous errors
-                salaryItemsBody.innerHTML = ''; // Clear previous table data
+                loadingMessage.classList.remove('hidden'); // Hiển thị thông báo đang tải
+                errorMessage.classList.add('hidden'); // Ẩn bất kỳ lỗi trước đó
+                salaryItemsBody.innerHTML = ''; // Xóa dữ liệu bảng cũ
 
                 let data = null;
                 try {
-                    // --- Uncomment the fetch block below when using your actual API ---
-                    // const response = await fetch(jsonApiUrl);
-                    // if (!response.ok) {
-                    //     throw new Error(`HTTP error! status: ${response.status}`);
-                    // }
-                    // data = await response.json();
+                    const response = await fetch(jsonApiUrl);
+                    if (!response.ok) {
+                        throw new Error(`Lỗi HTTP! status: ${response.status}. Có thể Web App URL không đúng hoặc không trả về dữ liệu.`);
+                    }
+                    data = await response.json();
 
-                    // --- For demo, use mockData instead of fetch ---
-                    data = mockData;
-                    if (!data) {
-                        throw new Error('Không tìm thấy dữ liệu cho Mã NV, Năm và Tháng này.');
+                    if (!data || Object.keys(data).length === 0 || data.error) { // Kiểm tra nếu data rỗng hoặc có lỗi
+                        const errorMsg = data.error || 'Không tìm thấy dữ liệu cho Mã NV, Năm và Tháng này.';
+                        throw new Error(errorMsg);
                     }
                 } catch (error) {
-                    console.error('Error fetching salary data:', error);
+                    console.error('Lỗi khi tải dữ liệu lương:', error);
                     errorMessage.textContent = `Lỗi: ${error.message}. Vui lòng kiểm tra lại Mã NV, Năm, Tháng hoặc URL API.`;
                     errorMessage.classList.remove('hidden');
                     loadingMessage.classList.add('hidden');
                     return;
                 } finally {
-                    loadingMessage.classList.add('hidden'); // Hide loading message
+                    loadingMessage.classList.add('hidden'); // Ẩn thông báo đang tải
                 }
 
-                // Populate header info
+                // Điền thông tin tiêu đề
                 document.getElementById('month').textContent = data.thang || 'XX';
                 document.getElementById('year').textContent = data.nam || 'YYYY';
                 document.getElementById('employee-id').textContent = data.mnv || '';
@@ -263,7 +219,7 @@
                 document.getElementById('department').textContent = data.phongBan || '';
                 document.getElementById('position').textContent = data.chucVu || '';
 
-                // Populate dynamic salary items
+                // Điền các khoản mục lương động
                 const salaryItems = [
                     { label: 'Lương cơ bản', value: data.luongCoBan },
                     { label: 'Phụ cấp', value: data.phuCap },
@@ -280,13 +236,13 @@
                     `;
                 });
 
-                // Populate net salary and other details
+                // Điền lương thực lãnh và các chi tiết khác
                 document.getElementById('net-salary').textContent = formatCurrency(data.luongThucLanh);
                 document.getElementById('work-days').textContent = data.ngayCong || '';
                 document.getElementById('notes').textContent = data.ghiChu || 'Phiếu lương này chỉ có giá trị nội bộ.';
             }
 
-            fetchSalaryData(); // Call the function to load data when the page loads
+            fetchSalaryData(); // Gọi hàm để tải dữ liệu khi trang tải
         });
     </script>
 </body>
