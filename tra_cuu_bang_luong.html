@@ -168,7 +168,8 @@
             try {
                 // Get URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
-                const mnv = urlParams.get('mnv');
+                // Renamed mnv to maNV
+                const maNV = urlParams.get('maNV');
                 const nam = urlParams.get('nam');
                 const thang = urlParams.get('thang');
 
@@ -176,12 +177,14 @@
                 const baseUrl = "https://script.google.com/macros/s/AKfycbwjswf2C2OpNOpqmZTdZGOykryM25b0tjJ1b7L5CQWpt14yDv7KIoAptgZw_Xetwoaa/exec";
 
                 // Check if all required parameters are present
-                if (!mnv || !nam || !thang) {
-                    throw new Error("Vui lòng cung cấp đầy đủ các tham số 'mnv', 'nam' và 'thang' trên URL.");
+                // Updated error message to reflect 'maNV'
+                if (!maNV || !nam || !thang) {
+                    throw new Error("Vui lòng cung cấp đầy đủ các tham số 'maNV', 'nam' và 'thang' trên URL.");
                 }
 
                 // Construct the full API URL with parameters
-                const apiUrl = `${baseUrl}?mnv=${encodeURIComponent(mnv)}&nam=${encodeURIComponent(nam)}&thang=${encodeURIComponent(thang)}`;
+                // Changed mnv to maNV in the API URL
+                const apiUrl = `${baseUrl}?mnv=${encodeURIComponent(maNV)}&nam=${encodeURIComponent(nam)}&thang=${encodeURIComponent(thang)}`;
 
                 // Fetch data from the Google Apps Script
                 const response = await fetch(apiUrl);
