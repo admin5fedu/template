@@ -3,130 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hiển Thị Dữ Liệu Từ Google Script</title>
+    <title>Phiếu Lương Tháng</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* CSS để làm cho bảng đẹp hơn */
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: "Inter", sans-serif;
+            background-color: #f3f4f6;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .payslip-container {
+            max-width: 768px; /* md:max-w-xl, lg:max-w-2xl */
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+            padding: 2.5rem; /* p-10 */
+            box-sizing: border-box; /* Ensures padding doesn't add to total width */
+            position: relative; /* For loading overlay */
         }
         h1 {
-            text-align: center;
+            color: #1f2937; /* text-gray-900 */
         }
-        table {
-            width: 100%;
-            border-collapse: collapse; /* Gộp các đường viền lại */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        h2 {
+            color: #374151; /* text-gray-800 */
         }
-        th, td {
-            border: 1px solid #ddd; /* Đường viền mỏng, màu xám */
-            padding: 12px;
-            text-align: left;
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: 1rem; /* gap-4 */
         }
-        thead {
-            background-color: #4CAF50; /* Màu nền xanh cho tiêu đề */
-            color: white; /* Chữ màu trắng */
+        @media (min-width: 640px) { /* sm */
+            .info-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
-        tbody tr:nth-child(even) {
-            background-color: #f2f2f2; /* Tạo hiệu ứng ngựa vằn cho các hàng */
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e5e7eb; /* border-gray-200 */
         }
-        tbody tr:hover {
-            background-color: #ddd; /* Hiệu ứng khi di chuột qua */
+        .detail-item:last-child {
+            border-bottom: none;
         }
-        .loading {
-            text-align: center;
-            font-size: 1.2em;
-            padding: 20px;
+        .label {
+            font-weight: 500; /* font-medium */
+            color: #4b5563; /* text-gray-700 */
+        }
+        .value {
+            color: #1f2937; /* text-gray-900 */
+            text-align: right;
+        }
+        .total-amount {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* font-bold */
+            color: #10b981; /* text-emerald-500 */
+        }
+        .text-muted {
+            color: #6b7280; /* text-gray-500 */
+        }
+        /* Loading overlay styles */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10;
+            border-radius: 0.75rem;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* blue-500 */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
+    <div class="payslip-container">
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <p class="mt-4 text-gray-700">Đang tải dữ liệu...</p>
+        </div>
 
-    <h1>Danh Sách Học Sinh</h1>
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold mb-2">PHIẾU LƯƠNG</h1>
+            <p id="payslip-month-year" class="text-lg text-muted">Đang tải...</p>
+        </div>
 
-    <!-- Bảng sẽ được điền dữ liệu vào đây -->
-    <table id="dataTable">
-        <thead>
-            <!-- Tiêu đề của bảng sẽ được tạo ở đây bằng JavaScript -->
-        </thead>
-        <tbody>
-            <!-- Dữ liệu các hàng sẽ được chèn vào đây -->
-        </tbody>
-    </table>
-    
-    <!-- Thông báo đang tải -->
-    <div id="loadingMessage" class="loading">
-        Đang tải dữ liệu, vui lòng chờ...
+        <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Thông tin Nhân viên</h2>
+            <div class="info-grid">
+                <div>
+                    <p><span class="label">Mã NV:</span> <span id="employee-id" class="value"></span></p>
+                    <p><span class="label">Họ và tên:</span> <span id="employee-name" class="value"></span></p>
+                </div>
+                <div>
+                    <p><span class="label">Phòng ban:</span> <span id="department" class="value"></span></p>
+                    <p><span class="label">Chức vụ:</span> <span id="position" class="value"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Chi tiết Lương</h2>
+            <div class="detail-item">
+                <span class="label">Lương cơ bản:</span>
+                <span id="basic-salary" class="value"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Phụ cấp:</span>
+                <span id="allowance" class="value"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Thưởng:</span>
+                <span id="bonus" class="value"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Phạt:</span>
+                <span id="deduction" class="value"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Ngày công:</span>
+                <span id="work-days" class="value"></span>
+            </div>
+        </div>
+
+        <div class="p-6 bg-green-50 rounded-lg border-2 border-green-200">
+            <h2 class="text-2xl font-semibold mb-4 text-green-800">Tổng kết</h2>
+            <div class="flex justify-between items-center mb-2">
+                <span class="label text-xl font-bold text-green-900">Lương thực lãnh:</span>
+                <span id="net-salary" class="total-amount"></span>
+            </div>
+            <p id="notes" class="text-muted text-sm text-right mt-4"></p>
+        </div>
     </div>
 
     <script>
-        // Link API chứa dữ liệu JSON
-        const apiUrl = 'https://script.googleusercontent.com/a/macros/5fedu.com/echo?user_content_key=AehSKLj9ctPANuL5MA7uwJtY4ZtLSqPPzQi_9W8P9atP8vScPMir-gxv4ybsOubLO-IjUSevhQWGl8VEH5-3yC96FBU-W_W_XuzHUpueaEznyIGXsd6nZ6omtIzjIONMgU44LNhbziV0bHcDU2Xj2AJOg1GJs8WU6uLByBSJ8BWgI9sc8GaUBq_STLrDtEBKRH5EjMBMYZbFddmAv3uZ5DF8UStwf7jCV0gJ83hAd84Z7MiB8HN19gDAA68yZYuIk-vcL6QXLyvoRb3roaLhyBxKZBVhqn9kqTBCeIOPoYSqCYRUZdCtldQ&lib=M3HS9hU-CtnVPMmLdACevME-OGeBxZ_N_';
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const payslipContainer = document.querySelector('.payslip-container');
 
-        // Lấy các phần tử HTML để làm việc
-        const tableHead = document.querySelector('#dataTable thead');
-        const tableBody = document.querySelector('#dataTable tbody');
-        const loadingMessage = document.getElementById('loadingMessage');
+            // Hide the content initially
+            payslipContainer.style.visibility = 'hidden';
 
-        // Sử dụng fetch API để lấy dữ liệu từ link
-        fetch(apiUrl)
-            .then(response => {
-                // Kiểm tra xem yêu cầu có thành công không
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
+            try {
+                // Get URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const mnv = urlParams.get('mnv');
+                const nam = urlParams.get('nam');
+                const thang = urlParams.get('thang');
+
+                // Define the base API URL
+                const baseUrl = "https://script.google.com/macros/s/AKfycbwjswf2C2OpNOpqmZTdZGOykryM25b0tjJ1b7L5CQWpt14yDv7KIoAptgZw_Xetwoaa/exec";
+
+                // Check if all required parameters are present
+                if (!mnv || !nam || !thang) {
+                    throw new Error("Vui lòng cung cấp đầy đủ các tham số 'mnv', 'nam' và 'thang' trên URL.");
                 }
-                // Chuyển đổi phản hồi sang dạng JSON
-                return response.json();
-            })
-            .then(data => {
-                // Ẩn thông báo đang tải
-                loadingMessage.style.display = 'none';
 
-                // --- Bước 1: Tạo tiêu đề cho bảng ---
-                // Lấy các key từ đối tượng đầu tiên trong mảng dữ liệu (ví dụ: 'stt', 'hoten', 'lop'...)
-                const headers = Object.keys(data[0]);
-                const headerRow = document.createElement('tr');
+                // Construct the full API URL with parameters
+                const apiUrl = `${baseUrl}?mnv=${encodeURIComponent(mnv)}&nam=${encodeURIComponent(nam)}&thang=${encodeURIComponent(thang)}`;
 
-                // Ánh xạ key sang tên tiếng Việt dễ hiểu
-                const headerMapping = {
-                    stt: "STT",
-                    hoten: "Họ và Tên",
-                    ngaysinh: "Ngày Sinh",
-                    gioitinh: "Giới Tính",
-                    lop: "Lớp"
+                // Fetch data from the Google Apps Script
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`Lỗi HTTP: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Check if data is an array and contains elements
+                if (!Array.isArray(data) || data.length === 0) {
+                    throw new Error("Không tìm thấy dữ liệu phù hợp với các tham số đã cung cấp.");
+                }
+
+                // Assuming the API returns an array, and we want the first matching entry
+                // In a real scenario, you might need to filter if the API returns multiple results
+                const payslipData = data[0]; // Take the first item in the array
+
+                // Update the HTML elements with fetched data
+                document.getElementById('payslip-month-year').textContent = `Tháng ${payslipData['Tháng']} Năm ${payslipData['Năm']}`;
+                document.getElementById('employee-id').textContent = payslipData['Mã NV'];
+                document.getElementById('employee-name').textContent = payslipData['Họ và tên'];
+                document.getElementById('department').textContent = payslipData['Phòng ban'];
+                document.getElementById('position').textContent = payslipData['Chức vụ'];
+
+                // Format currency values
+                const formatCurrency = (amount) => {
+                    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
                 };
 
-                // Lặp qua các key để tạo thẻ <th> (table header)
-                headers.forEach(headerText => {
-                    const th = document.createElement('th');
-                    // Sử dụng tên đã ánh xạ, nếu không có thì dùng tên gốc
-                    th.textContent = headerMapping[headerText] || headerText; 
-                    headerRow.appendChild(th);
-                });
-                tableHead.appendChild(headerRow);
+                document.getElementById('basic-salary').textContent = formatCurrency(payslipData['Lương cơ bản']);
+                document.getElementById('allowance').textContent = formatCurrency(payslipData['Phụ cấp']);
+                document.getElementById('bonus').textContent = formatCurrency(payslipData['Thưởng']);
+                document.getElementById('deduction').textContent = formatCurrency(payslipData['Phạt']);
+                document.getElementById('net-salary').textContent = formatCurrency(payslipData['Lương thực lãnh']);
+                document.getElementById('work-days').textContent = `${payslipData['Ngày công']} ngày`;
+                document.getElementById('notes').textContent = payslipData['Ghi chú'] || 'Không có ghi chú.';
 
-                // --- Bước 2: Điền dữ liệu vào các hàng của bảng ---
-                // Lặp qua từng đối tượng (từng học sinh) trong mảng dữ liệu
-                data.forEach(item => {
-                    const row = document.createElement('tr'); // Tạo một hàng mới <tr>
-
-                    // Lặp qua các key trong tiêu đề để đảm bảo các cột đúng thứ tự
-                    headers.forEach(header => {
-                        const cell = document.createElement('td'); // Tạo một ô mới <td>
-                        cell.textContent = item[header]; // Lấy giá trị tương ứng và gán vào ô
-                        row.appendChild(cell); // Thêm ô vào hàng
-                    });
-
-                    tableBody.appendChild(row); // Thêm hàng đã hoàn thiện vào thân bảng
-                });
-            })
-            .catch(error => {
-                // Nếu có lỗi xảy ra (ví dụ: mất mạng, link sai) thì hiển thị lỗi
-                console.error('Lỗi khi lấy dữ liệu:', error);
-                loadingMessage.textContent = 'Không thể tải dữ liệu. Vui lòng kiểm tra lại kết nối mạng hoặc đường link.';
-                loadingMessage.style.color = 'red';
-            });
+            } catch (error) {
+                console.error("Lỗi khi tải phiếu lương:", error);
+                document.getElementById('payslip-month-year').textContent = `Lỗi: ${error.message}`;
+                // Optionally hide other sections or display a specific error message prominently
+                document.querySelector('.info-grid').innerHTML = `<p class="text-red-600">${error.message}</p>`;
+                document.querySelector('.detail-item').closest('div').innerHTML = ''; // Clear details
+                document.querySelector('.total-amount').closest('div').innerHTML = ''; // Clear total
+            } finally {
+                // Hide loading overlay and show content
+                loadingOverlay.style.display = 'none';
+                payslipContainer.style.visibility = 'visible';
+            }
+        });
     </script>
-
 </body>
 </html>
