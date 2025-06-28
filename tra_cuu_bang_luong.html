@@ -2,71 +2,94 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Bảng lương nhân viên</title>
+  <title>Phiếu lương nhân viên</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
+    .month-summary { cursor: pointer; margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: #f9f9f9; }
+    .month-summary:hover { background: #eef; }
+    .details { display: none; margin-left: 20px; }
+    .highlight { font-weight: bold; color: #007BFF; }
   </style>
 </head>
 <body>
-  <h2>Bảng lương nhân viên</h2>
+  <h2>Phiếu lương nhân viên</h2>
   <div id="info"></div>
-  <table id="salaryTable">
-    <thead></thead>
-    <tbody></tbody>
-  </table>
+  <div id="summary"></div>
 
   <script>
-    // Lấy mã nhân viên từ URL
+    // Hàm lấy tham số trên URL
     function getQueryParam(name) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
     }
 
     const ma_nv = getQueryParam("ma_nv");
+    const apiUrl = "https://script.google.com/macros/s/AKfycbzp2GVzS0E0oYckjEo-P2Ag6PZQVunwx66kxbYo2w1ay5Zjbef2feVgyXykcVE2IIww/exec";
 
     if (!ma_nv) {
-      document.getElementById("info").innerText = "⚠️ Vui lòng truyền mã nhân viên qua URL (?ma_nv=NV001)";
+      document.getElementById("info").innerText = "⚠️ Vui lòng truyền mã nhân viên (?ma_nv=NV001)";
     } else {
-      document.getElementById("info").innerText = `📌 Hiển thị bảng lương cho nhân viên: ${ma_nv}`;
-      fetch("https://script.google.com/macros/s/AKfycbwhFT5VhTGwceBt89zIaIAlKy-lwbhkioUtb0peOB8F2ITaigfsV5IY0Q-usgU2Rkvp/exec")
+      document.getElementById("info").innerHTML = `📌 Hiển thị lương cho nhân viên <span class="highlight">${ma_nv}</span>`;
+      
+      fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
           const filtered = data.filter(row => row["Mã NV"] === ma_nv);
           if (filtered.length === 0) {
-            document.getElementById("salaryTable").innerHTML = "<tr><td colspan='10'>Không tìm thấy dữ liệu.</td></tr>";
+            document.getElementById("summary").innerHTML = "❌ Không tìm thấy dữ liệu.";
             return;
           }
 
-          // Tạo tiêu đề bảng
-          const headers = Object.keys(filtered[0]);
-          const thead = document.querySelector("#salaryTable thead");
-          const headerRow = document.createElement("tr");
-          headers.forEach(header => {
-            const th = document.createElement("th");
-            th.textContent = header;
-            headerRow.appendChild(th);
-          });
-          thead.appendChild(headerRow);
-
-          // Tạo nội dung bảng
-          const tbody = document.querySelector("#salaryTable tbody");
+          // Tổng thu nhập theo năm
+          let total = 0;
           filtered.forEach(row => {
-            const tr = document.createElement("tr");
-            headers.forEach(header => {
-              const td = document.createElement("td");
-              td.textContent = row[header];
-              tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
+            total += parseFloat(row["Lương thực lãnh"]) || 0;
           });
+
+          const year = filtered[0]["Năm"];
+          let html = `<h3>Tổng thu nhập năm ${year}: <span class="highlight">${total.toLocaleString()} đ</span></h3>`;
+          html += `<h4>Chi tiết các tháng:</h4>`;
+
+          filtered.sort((a, b) => a["Tháng"] - b["Tháng"]); // sắp xếp theo tháng
+
+          filtered.forEach((row, index) => {
+            const monthId = `details-${index}`;
+            html += `
+              <div class="month-summary" onclick="toggleDetails('${monthId}')">
+                Tháng ${row["Tháng"]} – Tổng thu nhập: <strong>${parseInt(row["Lương thực lãnh"]).toLocaleString()} đ</strong>
+                <div class="details" id="${monthId}">
+                  <ul>
+                    <li>Họ và tên: ${row["Họ và tên"]}</li>
+                    <li>Phòng ban: ${row["Phòng ban"]}</li>
+                    <li>Chức vụ: ${row["Chức vụ"]}</li>
+                    <li>Lương cơ bản: ${parseInt(row["Lương cơ bản"]).toLocaleString()} đ</li>
+                    <li>Phụ cấp: ${parseInt(row["Phụ cấp"]).toLocaleString()} đ</li>
+                    <li>Thưởng: ${parseInt(row["Thưởng"]).toLocaleString()} đ</li>
+                    <li>Phạt: ${parseInt(row["Phạt"]).toLocaleString()} đ</li>
+                    <li>Lương thực lãnh: <strong>${parseInt(row["Lương thực lãnh"]).toLocaleString()} đ</strong></li>
+                    <li>Ngày công: ${row["Ngày công"]}</li>
+                    <li>Ghi chú: ${row["Ghi chú"] || "-"}</li>
+                  </ul>
+                </div>
+              </div>
+            `;
+          });
+
+          document.getElementById("summary").innerHTML = html;
         })
-        .catch(err => {
-          document.getElementById("info").innerText = "❌ Lỗi khi tải dữ liệu.";
-          console.error(err);
+        .catch(error => {
+          document.getElementById("summary").innerText = "❌ Lỗi khi tải dữ liệu.";
+          console.error(error);
         });
+    }
+
+    function toggleDetails(id) {
+      const el = document.getElementById(id);
+      if (el.style.display === "none" || el.style.display === "") {
+        el.style.display = "block";
+      } else {
+        el.style.display = "none";
+      }
     }
   </script>
 </body>
