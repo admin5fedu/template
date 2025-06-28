@@ -1,96 +1,386 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Phiếu lương nhân viên</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .month-summary { cursor: pointer; margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: #f9f9f9; }
-    .month-summary:hover { background: #eef; }
-    .details { display: none; margin-left: 20px; }
-    .highlight { font-weight: bold; color: #007BFF; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tra Cứu Phiếu Lương Nhân Viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to start to prevent overflow issues on small screens */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2.5rem; /* px-10 py-10 equivalent */
+            border-radius: 0.75rem; /* rounded-xl equivalent */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem; /* gap-6 equivalent */
+        }
+        h1 {
+            color: #1a202c; /* text-gray-900 equivalent */
+            margin-bottom: 1.5rem; /* mb-6 equivalent */
+            font-size: 2.25rem; /* text-4xl equivalent */
+            font-weight: 700; /* font-bold equivalent */
+            text-align: center;
+        }
+        label {
+            color: #4a5568; /* text-gray-700 equivalent */
+            font-weight: 600; /* font-semibold equivalent */
+            margin-bottom: 0.5rem; /* mb-2 equivalent */
+            display: block;
+        }
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem; /* py-3 px-4 equivalent */
+            border: 1px solid #cbd5e0; /* border-gray-300 equivalent */
+            border-radius: 0.5rem; /* rounded-lg equivalent */
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            border-color: #4299e1; /* focus:border-blue-500 equivalent */
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* focus:ring-blue-500 equivalent */
+        }
+        button {
+            background-color: #4299e1; /* bg-blue-600 equivalent */
+            color: #ffffff;
+            padding: 0.875rem 1.5rem; /* py-3.5 px-6 equivalent */
+            border-radius: 0.5rem; /* rounded-lg equivalent */
+            font-weight: 600; /* font-semibold equivalent */
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        button:hover {
+            background-color: #3182ce; /* hover:bg-blue-700 equivalent */
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .message-box {
+            background-color: #ffe0b2; /* Light orange for warning/info */
+            color: #e65100; /* Dark orange text */
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: bold;
+            display: none; /* Hidden by default */
+            border: 1px solid #ffcc80;
+            text-align: center;
+        }
+        .loading-indicator {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.125rem;
+            color: #4a5568;
+            display: none; /* Hidden by default */
+        }
+        .salary-slip-display {
+            background-color: #fbfdff; /* Light blueish background for slip */
+            padding: 2.5rem; /* px-10 py-10 equivalent */
+            border-radius: 0.75rem; /* rounded-xl equivalent */
+            border: 1px solid #e2e8f0; /* border-gray-200 equivalent */
+            margin-top: 2rem; /* mt-8 equivalent */
+            display: none; /* Hidden by default */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .salary-slip-display h2 {
+            text-align: center;
+            color: #2d3748; /* text-gray-800 equivalent */
+            font-size: 1.75rem; /* text-3xl equivalent */
+            font-weight: 700; /* font-bold equivalent */
+            margin-bottom: 2rem; /* mb-8 equivalent */
+        }
+        .salary-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem; /* gap-6 equivalent */
+            margin-bottom: 2rem; /* mb-8 equivalent */
+        }
+        .salary-info-item {
+            padding: 0.75rem; /* p-3 equivalent */
+            border-radius: 0.5rem; /* rounded-lg equivalent */
+            background-color: #f7fafc; /* bg-gray-50 equivalent */
+            border: 1px solid #edf2f7; /* border-gray-100 equivalent */
+        }
+        .salary-info-item strong {
+            display: block;
+            color: #2d3748; /* text-gray-800 equivalent */
+            font-size: 1rem; /* text-base equivalent */
+            margin-bottom: 0.25rem; /* mb-1 equivalent */
+        }
+        .salary-info-item span {
+            color: #4a5568; /* text-gray-700 equivalent */
+            font-size: 1.125rem; /* text-lg equivalent */
+            font-weight: 500;
+        }
+        .salary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem; /* mb-8 equivalent */
+        }
+        .salary-table th, .salary-table td {
+            border: 1px solid #e2e8f0; /* border-gray-200 equivalent */
+            padding: 1rem; /* p-4 equivalent */
+            text-align: left;
+        }
+        .salary-table th {
+            background-color: #edf2f7; /* bg-gray-100 equivalent */
+            color: #2d3748; /* text-gray-800 equivalent */
+            font-weight: 600; /* font-semibold equivalent */
+        }
+        .salary-table tbody tr:nth-child(even) {
+            background-color: #f7fafc; /* bg-gray-50 equivalent */
+        }
+        .salary-table td.total {
+            font-weight: bold;
+            background-color: #ebf8ff; /* bg-blue-50 equivalent */
+            color: #2c5282; /* text-blue-900 equivalent */
+            font-size: 1.25rem; /* text-xl equivalent */
+        }
+        .note-section {
+            background-color: #f0f4f8; /* bg-blue-50 equivalent */
+            padding: 1rem; /* p-4 equivalent */
+            border-left: 5px solid #63b3ed; /* border-l-4 border-blue-400 equivalent */
+            border-radius: 0.5rem; /* rounded-lg equivalent */
+            color: #2d3748; /* text-gray-800 equivalent */
+        }
+        .note-section strong {
+            color: #2c5282; /* text-blue-900 equivalent */
+        }
+    </style>
 </head>
 <body>
-  <h2>Phiếu lương nhân viên</h2>
-  <div id="info"></div>
-  <div id="summary"></div>
+    <div class="container">
+        <h1>Tra Cứu Phiếu Lương</h1>
 
-  <script>
-    // Hàm lấy tham số trên URL
-    function getQueryParam(name) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(name);
-    }
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+                <label for="employeeId">Mã NV:</label>
+                <input type="text" id="employeeId" placeholder="VD: NV001" class="rounded-md">
+            </div>
+            <div>
+                <label for="year">Năm:</label>
+                <input type="number" id="year" value="2025" min="2000" max="2100" class="rounded-md">
+            </div>
+            <div>
+                <label for="month">Tháng:</label>
+                <input type="number" id="month" value="1" min="1" max="12" class="rounded-md">
+            </div>
+        </div>
 
-    const ma_nv = getQueryParam("ma_nv");
-    const apiUrl = "https://script.google.com/macros/s/AKfycbzp2GVzS0E0oYckjEo-P2Ag6PZQVunwx66kxbYo2w1ay5Zjbef2feVgyXykcVE2IIww/exec";
+        <button id="searchButton" class="rounded-lg shadow-md">Tìm Phiếu Lương</button>
 
-    if (!ma_nv) {
-      document.getElementById("info").innerText = "⚠️ Vui lòng truyền mã nhân viên (?ma_nv=NV001)";
-    } else {
-      document.getElementById("info").innerHTML = `📌 Hiển thị lương cho nhân viên <span class="highlight">${ma_nv}</span>`;
-      
-      fetch(apiUrl)
-        .then(response => response.json())
-        .then(data => {
-          const filtered = data.filter(row => row["Mã NV"] === ma_nv);
-          if (filtered.length === 0) {
-            document.getElementById("summary").innerHTML = "❌ Không tìm thấy dữ liệu.";
-            return;
-          }
+        <div id="messageBox" class="message-box rounded-lg"></div>
+        <div id="loadingIndicator" class="loading-indicator">Đang tải dữ liệu...</div>
 
-          // Tổng thu nhập theo năm
-          let total = 0;
-          filtered.forEach(row => {
-            total += parseFloat(row["Lương thực lãnh"]) || 0;
-          });
+        <div id="salarySlipDisplay" class="salary-slip-display rounded-xl">
+            <h2>PHIẾU LƯƠNG THÁNG <span id="displayMonth"></span> NĂM <span id="displayYear"></span></h2>
 
-          const year = filtered[0]["Năm"];
-          let html = `<h3>Tổng thu nhập năm ${year}: <span class="highlight">${total.toLocaleString()} đ</span></h3>`;
-          html += `<h4>Chi tiết các tháng:</h4>`;
-
-          filtered.sort((a, b) => a["Tháng"] - b["Tháng"]); // sắp xếp theo tháng
-
-          filtered.forEach((row, index) => {
-            const monthId = `details-${index}`;
-            html += `
-              <div class="month-summary" onclick="toggleDetails('${monthId}')">
-                Tháng ${row["Tháng"]} – Tổng thu nhập: <strong>${parseInt(row["Lương thực lãnh"]).toLocaleString()} đ</strong>
-                <div class="details" id="${monthId}">
-                  <ul>
-                    <li>Họ và tên: ${row["Họ và tên"]}</li>
-                    <li>Phòng ban: ${row["Phòng ban"]}</li>
-                    <li>Chức vụ: ${row["Chức vụ"]}</li>
-                    <li>Lương cơ bản: ${parseInt(row["Lương cơ bản"]).toLocaleString()} đ</li>
-                    <li>Phụ cấp: ${parseInt(row["Phụ cấp"]).toLocaleString()} đ</li>
-                    <li>Thưởng: ${parseInt(row["Thưởng"]).toLocaleString()} đ</li>
-                    <li>Phạt: ${parseInt(row["Phạt"]).toLocaleString()} đ</li>
-                    <li>Lương thực lãnh: <strong>${parseInt(row["Lương thực lãnh"]).toLocaleString()} đ</strong></li>
-                    <li>Ngày công: ${row["Ngày công"]}</li>
-                    <li>Ghi chú: ${row["Ghi chú"] || "-"}</li>
-                  </ul>
+            <div class="salary-info-grid">
+                <div class="salary-info-item">
+                    <strong>Mã NV:</strong> <span id="displayEmployeeId"></span>
                 </div>
-              </div>
-            `;
-          });
+                <div class="salary-info-item">
+                    <strong>Họ và tên:</strong> <span id="displayFullName"></span>
+                </div>
+                <div class="salary-info-item">
+                    <strong>Phòng ban:</strong> <span id="displayDepartment"></span>
+                </div>
+                <div class="salary-info-item">
+                    <strong>Chức vụ:</strong> <span id="displayPosition"></span>
+                </div>
+                <div class="salary-info-item">
+                    <strong>Ngày công:</strong> <span id="displayWorkDays"></span>
+                </div>
+            </div>
 
-          document.getElementById("summary").innerHTML = html;
-        })
-        .catch(error => {
-          document.getElementById("summary").innerText = "❌ Lỗi khi tải dữ liệu.";
-          console.error(error);
+            <table class="salary-table">
+                <thead>
+                    <tr>
+                        <th>Khoản mục</th>
+                        <th>Số tiền (VNĐ)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Lương cơ bản</td>
+                        <td id="displayBasicSalary"></td>
+                    </tr>
+                    <tr>
+                        <td>Phụ cấp</td>
+                        <td id="displayAllowance"></td>
+                    </tr>
+                    <tr>
+                        <td>Thưởng</td>
+                        <td id="displayBonus"></td>
+                    </tr>
+                    <tr>
+                        <td>Phạt</td>
+                        <td id="displayFine"></td>
+                    </tr>
+                    <tr>
+                        <td class="total">LƯƠNG THỰC LÃNH</td>
+                        <td class="total" id="displayNetSalary"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="note-section">
+                <strong>Ghi chú:</strong> <span id="displayNotes"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const googleAppsScriptUrl = "https://script.google.com/macros/s/AKfycbwhFT5VhTGwceBt89zIaIAlKy-lwbhkioUtb0peOB8F2ITaigfsV5IY0Q-usgU2Rkvp/exec";
+
+        const employeeIdInput = document.getElementById('employeeId');
+        const yearInput = document.getElementById('year');
+        const monthInput = document.getElementById('month');
+        const searchButton = document.getElementById('searchButton');
+        const messageBox = document.getElementById('messageBox');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const salarySlipDisplay = document.getElementById('salarySlipDisplay');
+
+        // Elements to display salary details
+        const displayMonth = document.getElementById('displayMonth');
+        const displayYear = document.getElementById('displayYear');
+        const displayEmployeeId = document.getElementById('displayEmployeeId');
+        const displayFullName = document.getElementById('displayFullName');
+        const displayDepartment = document.getElementById('displayDepartment');
+        const displayPosition = document.getElementById('displayPosition');
+        const displayBasicSalary = document.getElementById('displayBasicSalary');
+        const displayAllowance = document.getElementById('displayAllowance');
+        const displayBonus = document.getElementById('displayBonus');
+        const displayFine = document.getElementById('displayFine');
+        const displayNetSalary = document.getElementById('displayNetSalary');
+        const displayWorkDays = document.getElementById('displayWorkDays');
+        const displayNotes = document.getElementById('displayNotes');
+
+        // Function to format number as currency (Vietnamese Dong)
+        const formatCurrency = (amount) => {
+            if (typeof amount !== 'number') return amount; // Return as is if not a number
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        };
+
+        const showMessage = (message, type = 'info') => {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            if (type === 'error') {
+                messageBox.style.backgroundColor = '#ffcdd2'; // light red
+                messageBox.style.color = '#c62828'; // dark red
+                messageBox.style.borderColor = '#ef9a9a';
+            } else if (type === 'success') {
+                messageBox.style.backgroundColor = '#c8e6c9'; // light green
+                messageBox.style.color = '#2e7d32'; // dark green
+                messageBox.style.borderColor = '#a5d6a7';
+            } else { // info
+                messageBox.style.backgroundColor = '#ffe0b2'; // light orange
+                messageBox.style.color = '#e65100'; // dark orange
+                messageBox.style.borderColor = '#ffcc80';
+            }
+        };
+
+        const hideMessage = () => {
+            messageBox.style.display = 'none';
+        };
+
+        const showLoading = () => {
+            loadingIndicator.style.display = 'block';
+            searchButton.disabled = true;
+            salarySlipDisplay.style.display = 'none'; // Hide previous slip
+            hideMessage(); // Hide any previous messages
+        };
+
+        const hideLoading = () => {
+            loadingIndicator.style.display = 'none';
+            searchButton.disabled = false;
+        };
+
+        const updateSalarySlip = (data) => {
+            displayMonth.textContent = data.Thang;
+            displayYear.textContent = data.Nam;
+            displayEmployeeId.textContent = data["Mã NV"];
+            displayFullName.textContent = data["Họ và tên"];
+            displayDepartment.textContent = data["Phòng ban"];
+            displayPosition.textContent = data["Chức vụ"];
+            displayBasicSalary.textContent = formatCurrency(data["Lương cơ bản"]);
+            displayAllowance.textContent = formatCurrency(data["Phụ cấp"]);
+            displayBonus.textContent = formatCurrency(data["Thưởng"]);
+            displayFine.textContent = formatCurrency(data["Phạt"]);
+            displayNetSalary.textContent = formatCurrency(data["Lương thực lãnh"]);
+            displayWorkDays.textContent = data["Ngày công"];
+            displayNotes.textContent = data["Ghi chú"] || "Không có ghi chú.";
+
+            salarySlipDisplay.style.display = 'block'; // Show the salary slip
+        };
+
+        searchButton.addEventListener('click', async () => {
+            const employeeId = employeeIdInput.value.trim();
+            const year = yearInput.value.trim();
+            const month = monthInput.value.trim();
+
+            if (!employeeId || !year || !month) {
+                showMessage('Vui lòng nhập đầy đủ Mã NV, Năm và Tháng.', 'error');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // Construct the URL with parameters
+                const url = `${googleAppsScriptUrl}?action=getAllData`; // Assuming an action to get all data
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const allData = await response.json();
+
+                // Find the specific salary record
+                const foundRecord = allData.find(record =>
+                    record["Mã NV"] === employeeId &&
+                    String(record.Nam) === year &&
+                    String(record.Thang) === month
+                );
+
+                if (foundRecord) {
+                    updateSalarySlip(foundRecord);
+                    showMessage('Đã tìm thấy phiếu lương!', 'success');
+                } else {
+                    showMessage('Không tìm thấy phiếu lương cho thông tin đã nhập.', 'info');
+                    salarySlipDisplay.style.display = 'none'; // Hide the slip if not found
+                }
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showMessage(`Lỗi khi tải dữ liệu: ${error.message}. Vui lòng thử lại sau.`, 'error');
+                salarySlipDisplay.style.display = 'none'; // Hide the slip on error
+            } finally {
+                hideLoading();
+            }
         });
-    }
 
-    function toggleDetails(id) {
-      const el = document.getElementById(id);
-      if (el.style.display === "none" || el.style.display === "") {
-        el.style.display = "block";
-      } else {
-        el.style.display = "none";
-      }
-    }
-  </script>
+        // Set current year and month as default
+        const currentDate = new Date();
+        yearInput.value = currentDate.getFullYear();
+        monthInput.value = currentDate.getMonth() + 1;
+
+        // Optionally, load some default data if needed (e.g., first record)
+        // searchButton.click(); // Uncomment to automatically load on page load
+    </script>
 </body>
 </html>
