@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Bảng lương nhân viên</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h2>Bảng lương nhân viên</h2>
+  <div id="info"></div>
+  <table id="salaryTable">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    // Lấy mã nhân viên từ URL
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    const ma_nv = getQueryParam("ma_nv");
+
+    if (!ma_nv) {
+      document.getElementById("info").innerText = "⚠️ Vui lòng truyền mã nhân viên qua URL (?ma_nv=NV001)";
+    } else {
+      document.getElementById("info").innerText = `📌 Hiển thị bảng lương cho nhân viên: ${ma_nv}`;
+      fetch("https://script.google.com/macros/s/AKfycbzp2GVzS0E0oYckjEo-P2Ag6PZQVunwx66kxbYo2w1ay5Zjbef2feVgyXykcVE2IIww/exec")
+        .then(response => response.json())
+        .then(data => {
+          const filtered = data.filter(row => row["Mã NV"] === ma_nv);
+          if (filtered.length === 0) {
+            document.getElementById("salaryTable").innerHTML = "<tr><td colspan='10'>Không tìm thấy dữ liệu.</td></tr>";
+            return;
+          }
+
+          // Tạo tiêu đề bảng
+          const headers = Object.keys(filtered[0]);
+          const thead = document.querySelector("#salaryTable thead");
+          const headerRow = document.createElement("tr");
+          headers.forEach(header => {
+            const th = document.createElement("th");
+            th.textContent = header;
+            headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+
+          // Tạo nội dung bảng
+          const tbody = document.querySelector("#salaryTable tbody");
+          filtered.forEach(row => {
+            const tr = document.createElement("tr");
+            headers.forEach(header => {
+              const td = document.createElement("td");
+              td.textContent = row[header];
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(err => {
+          document.getElementById("info").innerText = "❌ Lỗi khi tải dữ liệu.";
+          console.error(err);
+        });
+    }
+  </script>
+</body>
+</html>
