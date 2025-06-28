@@ -3,120 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hiển thị dữ liệu từ URL</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Hiển Thị Dữ Liệu Từ Google Script</title>
     <style>
+        /* CSS để làm cho bảng đẹp hơn */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 2rem;
-            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            margin: 20px;
         }
-        /* Custom scrollbar for table container */
-        .table-container::-webkit-scrollbar {
-            height: 8px;
+        h1 {
+            text-align: center;
         }
-        .table-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
+        table {
+            width: 100%;
+            border-collapse: collapse; /* Gộp các đường viền lại */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .table-container::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
+        th, td {
+            border: 1px solid #ddd; /* Đường viền mỏng, màu xám */
+            padding: 12px;
+            text-align: left;
         }
-        .table-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        thead {
+            background-color: #4CAF50; /* Màu nền xanh cho tiêu đề */
+            color: white; /* Chữ màu trắng */
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f2f2f2; /* Tạo hiệu ứng ngựa vằn cho các hàng */
+        }
+        tbody tr:hover {
+            background-color: #ddd; /* Hiệu ứng khi di chuột qua */
+        }
+        .loading {
+            text-align: center;
+            font-size: 1.2em;
+            padding: 20px;
         }
     </style>
 </head>
-<body class="bg-gray-100 p-8">
-    <div class="container mx-auto bg-white p-6 rounded-lg shadow-xl max-w-full lg:max-w-4xl">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Dữ liệu từ Google Sheets</h1>
-        <div id="loading" class="text-center text-lg text-blue-600 mb-4 hidden">
-            Đang tải dữ liệu...
-        </div>
-        <div id="error" class="text-center text-lg text-red-600 mb-4 hidden">
-            Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.
-        </div>
-        <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200 table-container">
-            <table id="dataTable" class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <!-- Tiêu đề bảng sẽ được thêm động tại đây -->
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <!-- Dữ liệu bảng sẽ được thêm động tại đây -->
-                </tbody>
-            </table>
-        </div>
+<body>
+
+    <h1>Danh Sách Học Sinh</h1>
+
+    <!-- Bảng sẽ được điền dữ liệu vào đây -->
+    <table id="dataTable">
+        <thead>
+            <!-- Tiêu đề của bảng sẽ được tạo ở đây bằng JavaScript -->
+        </thead>
+        <tbody>
+            <!-- Dữ liệu các hàng sẽ được chèn vào đây -->
+        </tbody>
+    </table>
+    
+    <!-- Thông báo đang tải -->
+    <div id="loadingMessage" class="loading">
+        Đang tải dữ liệu, vui lòng chờ...
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const dataUrl = 'https://script.googleusercontent.com/a/macros/5fedu.com/echo?user_content_key=AehSKLj9ctPANuL5MA7uwJtY4ZtLSqPPzQi_9W8P9atP8vScPMir-gxv4ybsOubLO-IjUSevhQWGl8VEH5-3yC96FBU-W_W_XuzHUpueaEznyIGXsd6nZ6omtIzjIONMgU44LNhbziV0bHcDU2Xj2AJOg1GJs8WU6uB_BSJ8BWgI9sc8GaUBq_STLrDtEBKRH5EjMBMYZbFddmAv3uZ5DF8UStwf7jCV0gJ83hAd84Z7MiB8HN19gDAA68yZYuIk-vcL6QXLyvoRb3roaLhyBxKZBVhqn9kqTBCeIOPoYSqCYRUZdCtldQ&lib=M3HS9hU-CtnVPMmLdACevME-OGeBxZ_N_';
-            const loadingDiv = document.getElementById('loading');
-            const errorDiv = document.getElementById('error');
-            const dataTable = document.getElementById('dataTable');
-            const tableHead = dataTable.querySelector('thead');
-            const tableBody = dataTable.querySelector('tbody');
+        // Link API chứa dữ liệu JSON
+        const apiUrl = 'https://script.googleusercontent.com/a/macros/5fedu.com/echo?user_content_key=AehSKLj9ctPANuL5MA7uwJtY4ZtLSqPPzQi_9W8P9atP8vScPMir-gxv4ybsOubLO-IjUSevhQWGl8VEH5-3yC96FBU-W_W_XuzHUpueaEznyIGXsd6nZ6omtIzjIONMgU44LNhbziV0bHcDU2Xj2AJOg1GJs8WU6uLByBSJ8BWgI9sc8GaUBq_STLrDtEBKRH5EjMBMYZbFddmAv3uZ5DF8UStwf7jCV0gJ83hAd84Z7MiB8HN19gDAA68yZYuIk-vcL6QXLyvoRb3roaLhyBxKZBVhqn9kqTBCeIOPoYSqCYRUZdCtldQ&lib=M3HS9hU-CtnVPMmLdACevME-OGeBxZ_N_';
 
-            // Hiển thị thông báo tải
-            loadingDiv.classList.remove('hidden');
+        // Lấy các phần tử HTML để làm việc
+        const tableHead = document.querySelector('#dataTable thead');
+        const tableBody = document.querySelector('#dataTable tbody');
+        const loadingMessage = document.getElementById('loadingMessage');
 
-            fetch(dataUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    loadingDiv.classList.add('hidden'); // Ẩn thông báo tải
-                    if (data && data.length > 0) {
-                        // Lấy các khóa từ đối tượng đầu tiên làm tiêu đề cột
-                        const headers = Object.keys(data[0]);
+        // Sử dụng fetch API để lấy dữ liệu từ link
+        fetch(apiUrl)
+            .then(response => {
+                // Kiểm tra xem yêu cầu có thành công không
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                // Chuyển đổi phản hồi sang dạng JSON
+                return response.json();
+            })
+            .then(data => {
+                // Ẩn thông báo đang tải
+                loadingMessage.style.display = 'none';
 
-                        // Tạo hàng tiêu đề
-                        let headerRow = document.createElement('tr');
-                        headers.forEach(headerText => {
-                            let th = document.createElement('th');
-                            th.textContent = headerText;
-                            th.classList.add('px-6', 'py-3', 'text-left', 'text-xs', 'font-medium', 'text-gray-500', 'uppercase', 'tracking-wider');
-                            headerRow.appendChild(th);
-                        });
-                        tableHead.appendChild(headerRow);
+                // --- Bước 1: Tạo tiêu đề cho bảng ---
+                // Lấy các key từ đối tượng đầu tiên trong mảng dữ liệu (ví dụ: 'stt', 'hoten', 'lop'...)
+                const headers = Object.keys(data[0]);
+                const headerRow = document.createElement('tr');
 
-                        // Tạo các hàng dữ liệu
-                        data.forEach(rowData => {
-                            let tr = document.createElement('tr');
-                            tr.classList.add('hover:bg-gray-50');
-                            headers.forEach(headerText => {
-                                let td = document.createElement('td');
-                                // Đảm bảo dữ liệu được hiển thị dưới dạng chuỗi, tránh null/undefined
-                                td.textContent = rowData[headerText] !== null && rowData[headerText] !== undefined ? rowData[headerText] : '';
-                                td.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'text-gray-900');
-                                tr.appendChild(td);
-                            });
-                            tableBody.appendChild(tr);
-                        });
-                    } else {
-                        // Hiển thị thông báo nếu không có dữ liệu
-                        errorDiv.textContent = 'Không có dữ liệu để hiển thị.';
-                        errorDiv.classList.remove('hidden');
-                    }
-                })
-                .catch(error => {
-                    loadingDiv.classList.add('hidden'); // Ẩn thông báo tải
-                    errorDiv.textContent = `Có lỗi xảy ra: ${error.message}. Vui lòng kiểm tra lại liên kết hoặc kết nối mạng.`;
-                    errorDiv.classList.remove('hidden'); // Hiển thị thông báo lỗi
-                    console.error('Error fetching data:', error);
+                // Ánh xạ key sang tên tiếng Việt dễ hiểu
+                const headerMapping = {
+                    stt: "STT",
+                    hoten: "Họ và Tên",
+                    ngaysinh: "Ngày Sinh",
+                    gioitinh: "Giới Tính",
+                    lop: "Lớp"
+                };
+
+                // Lặp qua các key để tạo thẻ <th> (table header)
+                headers.forEach(headerText => {
+                    const th = document.createElement('th');
+                    // Sử dụng tên đã ánh xạ, nếu không có thì dùng tên gốc
+                    th.textContent = headerMapping[headerText] || headerText; 
+                    headerRow.appendChild(th);
                 });
-        });
+                tableHead.appendChild(headerRow);
+
+                // --- Bước 2: Điền dữ liệu vào các hàng của bảng ---
+                // Lặp qua từng đối tượng (từng học sinh) trong mảng dữ liệu
+                data.forEach(item => {
+                    const row = document.createElement('tr'); // Tạo một hàng mới <tr>
+
+                    // Lặp qua các key trong tiêu đề để đảm bảo các cột đúng thứ tự
+                    headers.forEach(header => {
+                        const cell = document.createElement('td'); // Tạo một ô mới <td>
+                        cell.textContent = item[header]; // Lấy giá trị tương ứng và gán vào ô
+                        row.appendChild(cell); // Thêm ô vào hàng
+                    });
+
+                    tableBody.appendChild(row); // Thêm hàng đã hoàn thiện vào thân bảng
+                });
+            })
+            .catch(error => {
+                // Nếu có lỗi xảy ra (ví dụ: mất mạng, link sai) thì hiển thị lỗi
+                console.error('Lỗi khi lấy dữ liệu:', error);
+                loadingMessage.textContent = 'Không thể tải dữ liệu. Vui lòng kiểm tra lại kết nối mạng hoặc đường link.';
+                loadingMessage.style.color = 'red';
+            });
     </script>
+
 </body>
 </html>
