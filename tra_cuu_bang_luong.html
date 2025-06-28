@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phiếu Lương Nhân Viên</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -80,7 +79,6 @@
     <div class="container rounded-lg shadow-md">
         <h1 class="text-3xl font-bold text-center mb-6">PHIẾU LƯƠNG THÁNG <span id="month">XX</span> NĂM <span id="year">YYYY</span></h1>
 
-        <!-- Employee Info Header -->
         <div class="info-header">
             <div class="info-item">
                 <strong>Mã NV:</strong> <span id="employee-id"></span>
@@ -99,7 +97,6 @@
             </div>
         </div>
 
-        <!-- Salary Details Table -->
         <table class="w-full border border-gray-300 rounded-md overflow-hidden">
             <thead>
                 <tr class="bg-gray-100 text-gray-700">
@@ -109,8 +106,7 @@
                 </tr>
             </thead>
             <tbody id="salary-items-body">
-                <!-- Data will be inserted here by JavaScript -->
-            </tbody>
+                </tbody>
             <tfoot>
                 <tr class="bg-blue-100 font-bold text-blue-800">
                     <td colspan="2" class="py-3 px-4 border-t border-gray-300 text-left">LƯƠNG THỰC LÃNH</td>
@@ -119,22 +115,18 @@
             </tfoot>
         </table>
 
-        <!-- Other Info -->
         <div class="info-header">
             <div class="info-item">
                 <strong>Ngày công:</strong> <span id="work-days"></span>
             </div>
             <div class="info-item">
-                <!-- This item can be used for other dynamic fields if needed -->
-            </div>
+                </div>
         </div>
 
-        <!-- Notes Section -->
         <div class="note rounded-md">
             <strong>Ghi chú:</strong> <span id="notes"></span>
         </div>
 
-        <!-- Loading and Error Messages -->
         <div id="loading-message" class="text-center text-gray-600 mt-4 hidden">Đang tải dữ liệu...</div>
         <div id="error-message" class="text-center text-red-600 mt-4 hidden"></div>
     </div>
@@ -177,7 +169,8 @@
 
                 // --- QUAN TRỌNG: Thay thế URL này bằng URL Web App Google Apps Script thực tế của bạn ---
                 // Google Apps Script Web App của bạn cần được triển khai và trả về JSON theo cấu trúc mong đợi.
-                const jsonApiUrl = `https://your-google-apps-script-web-app-url/exec?mnv=${mnv}&nam=${nam}&thang=${thang}`;
+                const jsonApiUrl = `https://script.google.com/macros/s/YOUR_DEPLOYED_WEB_APP_ID/exec?mnv=${mnv}&nam=${nam}&thang=${thang}`;
+                // Ví dụ URL: https://script.google.com/macros/s/AKfycbz_YOUR_ID_HERE/exec?mnv=NV001&nam=2025&thang=06
 
                 if (!mnv || !nam || !thang) {
                     errorMessage.textContent = 'Vui lòng cung cấp Mã NV, Năm và Tháng trên URL (ví dụ: ?mnv=NV001&nam=2025&thang=06)';
@@ -197,8 +190,9 @@
                     }
                     data = await response.json();
 
-                    if (!data || Object.keys(data).length === 0 || data.error) { // Kiểm tra nếu data rỗng hoặc có lỗi
-                        const errorMsg = data.error || 'Không tìm thấy dữ liệu cho Mã NV, Năm và Tháng này.';
+                    // Kiểm tra nếu data rỗng, không có dữ liệu hoặc có trường 'error'
+                    if (!data || Object.keys(data).length === 0 || data.error) {
+                        const errorMsg = data && data.error ? data.error : 'Không tìm thấy dữ liệu cho Mã NV, Năm và Tháng này.';
                         throw new Error(errorMsg);
                     }
                 } catch (error) {
@@ -224,7 +218,8 @@
                     { label: 'Lương cơ bản', value: data.luongCoBan },
                     { label: 'Phụ cấp', value: data.phuCap },
                     { label: 'Thưởng', value: data.thuong },
-                    { label: 'Phạt', value: data.phat }
+                    { label: 'Phạt', value: data.phat },
+                    // Thêm các khoản mục khác nếu có trong dữ liệu của bạn
                 ];
 
                 salaryItems.forEach((item, index) => {
@@ -238,7 +233,7 @@
 
                 // Điền lương thực lãnh và các chi tiết khác
                 document.getElementById('net-salary').textContent = formatCurrency(data.luongThucLanh);
-                document.getElementById('work-days').textContent = data.ngayCong || '';
+                document.getElementById('work-days').textContent = data.ngayCong || 'N/A'; // Hiển thị 'N/A' nếu không có dữ liệu
                 document.getElementById('notes').textContent = data.ghiChu || 'Phiếu lương này chỉ có giá trị nội bộ.';
             }
 
