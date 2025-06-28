@@ -31,7 +31,7 @@
       document.getElementById("info").innerText = "⚠️ Vui lòng truyền mã nhân viên qua URL (?ma_nv=NV001)";
     } else {
       document.getElementById("info").innerText = `📌 Hiển thị bảng lương cho nhân viên: ${ma_nv}`;
-      fetch("https://script.google.com/macros/s/AKfycbzp2GVzS0E0oYckjEo-P2Ag6PZQVunwx66kxbYo2w1ay5Zjbef2feVgyXykcVE2IIww/exec")
+      fetch("https://script.google.com/macros/s/AKfycbwhFT5VhTGwceBt89zIaIAlKy-lwbhkioUtb0peOB8F2ITaigfsV5IY0Q-usgU2Rkvp/exec")
         .then(response => response.json())
         .then(data => {
           const filtered = data.filter(row => row["Mã NV"] === ma_nv);
