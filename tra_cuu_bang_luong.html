@@ -4,35 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phiếu Lương Nhân Viên</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Inter', sans-serif;
             background-color: #f4f4f4;
         }
         .container {
             background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
+            padding: 2.5rem; /* Equivalent to 30px */
+            border-radius: 0.5rem; /* Equivalent to 8px */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             max-width: 800px;
-            margin: auto;
+            margin: 20px auto; /* Add margin-top and margin-bottom */
         }
         h1 {
-            text-align: center;
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 1.5rem; /* Equivalent to 30px */
         }
         table {
-            width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 1.25rem; /* Equivalent to 20px */
         }
         table, th, td {
             border: 1px solid #ddd;
         }
         th, td {
-            padding: 12px;
+            padding: 0.75rem; /* Equivalent to 12px */
             text-align: left;
         }
         th {
@@ -44,116 +44,250 @@
             background-color: #e6f7ff;
         }
         .note {
-            margin-top: 20px;
-            padding: 10px;
+            margin-top: 1.25rem; /* Equivalent to 20px */
+            padding: 0.625rem; /* Equivalent to 10px */
             background-color: #fffacd;
             border-left: 5px solid #ffebcd;
         }
         .info-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 1.25rem; /* Equivalent to 20px */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
         }
         .info-item {
             flex: 1;
-            padding: 0 10px;
+            padding: 0 0.625rem; /* Equivalent to 0 10px */
+            min-width: 280px; /* Ensure items don't get too small */
         }
         .info-item strong {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 0.3125rem; /* Equivalent to 5px */
             color: #555;
+        }
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .info-header {
+                flex-direction: column;
+            }
+            .info-item {
+                padding: 0.5rem 0;
+            }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>PHIẾU LƯƠNG THÁNG <span id="month">XX</span> NĂM <span id="year">YYYY</span></h1>
+<body class="p-5">
+    <div class="container rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold text-center mb-6">PHIẾU LƯƠNG THÁNG <span id="month">XX</span> NĂM <span id="year">YYYY</span></h1>
 
+        <!-- Employee Info Header -->
         <div class="info-header">
             <div class="info-item">
-                <strong>Mã NV:</strong> <span id="employee-id">NV001</span>
+                <strong>Mã NV:</strong> <span id="employee-id"></span>
             </div>
             <div class="info-item">
-                <strong>Họ và tên:</strong> <span id="full-name">Nguyễn Văn A</span>
+                <strong>Họ và tên:</strong> <span id="full-name"></span>
             </div>
         </div>
 
         <div class="info-header">
             <div class="info-item">
-                <strong>Phòng ban:</strong> <span id="department">Phòng Kinh doanh</span>
+                <strong>Phòng ban:</strong> <span id="department"></span>
             </div>
             <div class="info-item">
-                <strong>Chức vụ:</strong> <span id="position">Nhân viên kinh doanh</span>
+                <strong>Chức vụ:</strong> <span id="position"></span>
             </div>
         </div>
 
-        <table>
+        <!-- Salary Details Table -->
+        <table class="w-full border border-gray-300 rounded-md overflow-hidden">
             <thead>
-                <tr>
-                    <th>STT</th>
-                    <th>Khoản mục</th>
-                    <th>Số tiền (VNĐ)</th>
+                <tr class="bg-gray-100 text-gray-700">
+                    <th class="py-3 px-4 border-b border-gray-300">STT</th>
+                    <th class="py-3 px-4 border-b border-gray-300">Khoản mục</th>
+                    <th class="py-3 px-4 border-b border-gray-300 text-right">Số tiền (VNĐ)</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Lương cơ bản</td>
-                    <td id="basic-salary">10,000,000</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Phụ cấp</td>
-                    <td id="allowance">1,500,000</td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>Thưởng</td>
-                    <td id="bonus">500,000</td>
-                </tr>
-                <tr>
-                    <td>4</td>
-                    <td>Phạt</td>
-                    <td id="fine">200,000</td>
-                </tr>
-                <tr>
-                    <td colspan="2" class="total">LƯƠNG THỰC LÃNH</td>
-                    <td class="total" id="net-salary">11,800,000</td>
-                </tr>
+            <tbody id="salary-items-body">
+                <!-- Data will be inserted here by JavaScript -->
             </tbody>
+            <tfoot>
+                <tr class="bg-blue-100 font-bold text-blue-800">
+                    <td colspan="2" class="py-3 px-4 border-t border-gray-300 text-left">LƯƠNG THỰC LÃNH</td>
+                    <td class="py-3 px-4 border-t border-gray-300 text-right" id="net-salary"></td>
+                </tr>
+            </tfoot>
         </table>
 
+        <!-- Other Info -->
         <div class="info-header">
             <div class="info-item">
-                <strong>Ngày công:</strong> <span id="work-days">22</span>
+                <strong>Ngày công:</strong> <span id="work-days"></span>
             </div>
             <div class="info-item">
-                </div>
+                <!-- This item can be used for other dynamic fields if needed -->
+            </div>
         </div>
 
-        <div class="note">
-            <strong>Ghi chú:</strong> <span id="notes">Phiếu lương này chỉ có giá trị nội bộ.</span>
+        <!-- Notes Section -->
+        <div class="note rounded-md">
+            <strong>Ghi chú:</strong> <span id="notes"></span>
         </div>
+
+        <!-- Loading and Error Messages -->
+        <div id="loading-message" class="text-center text-gray-600 mt-4 hidden">Đang tải dữ liệu...</div>
+        <div id="error-message" class="text-center text-red-600 mt-4 hidden"></div>
     </div>
 
     <script>
-        // Bạn có thể dùng JavaScript để điền dữ liệu động vào phiếu lương
-        // Ví dụ:
-        document.getElementById('month').textContent = '06'; // Tháng hiện tại
-        document.getElementById('year').textContent = '2025'; // Năm hiện tại
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingMessage = document.getElementById('loading-message');
+            const errorMessage = document.getElementById('error-message');
+            const salaryItemsBody = document.getElementById('salary-items-body');
 
-        // Các trường dữ liệu mẫu, bạn sẽ thay thế bằng dữ liệu thực tế từ database hoặc form
-        document.getElementById('employee-id').textContent = 'NV001';
-        document.getElementById('full-name').textContent = 'Nguyễn Văn A';
-        document.getElementById('department').textContent = 'Phòng Kinh doanh';
-        document.getElementById('position').textContent = 'Nhân viên kinh doanh';
-        document.getElementById('basic-salary').textContent = '10,000,000';
-        document.getElementById('allowance').textContent = '1,500,000';
-        document.getElementById('bonus').textContent = '500,000';
-        document.getElementById('fine').textContent = '200,000';
-        document.getElementById('net-salary').textContent = '11,800,000'; // Tính toán từ các trường trên
-        document.getElementById('work-days').textContent = '22';
-        document.getElementById('notes').textContent = 'Phiếu lương này chỉ có giá trị nội bộ. Vui lòng kiểm tra kỹ trước khi xác nhận.';
+            // Function to get query parameters from URL
+            function getQueryParams() {
+                const params = {};
+                window.location.search.substring(1).split('&').forEach(param => {
+                    const parts = param.split('=');
+                    if (parts.length === 2) {
+                        params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+                    }
+                });
+                return params;
+            }
+
+            // Function to format numbers as Vietnamese currency (VND)
+            function formatCurrency(amount) {
+                if (typeof amount !== 'number') {
+                    // Try to convert if it's a string that looks like a number
+                    amount = parseFloat(amount);
+                    if (isNaN(amount)) {
+                        return ''; // Return empty string if not a valid number
+                    }
+                }
+                return amount.toLocaleString('vi-VN') + ' VNĐ';
+            }
+
+            // Function to populate salary slip data
+            async function fetchSalaryData() {
+                const params = getQueryParams();
+                const mnv = params.mnv;
+                const nam = params.nam;
+                const thang = params.thang;
+
+                // --- IMPORTANT: Replace this with your actual Google Apps Script Web App URL ---
+                // Example: https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
+                // Your Apps Script should accept 'mnv', 'nam', 'thang' as query parameters
+                // and return JSON data as structured below.
+                const jsonApiUrl = `https://your-google-apps-script-web-app-url/exec?mnv=${mnv}&nam=${nam}&thang=${thang}`;
+
+                // --- FOR DEMO/TESTING: Remove this block when using your actual API ---
+                // If you want to test without an actual API, uncomment the mockData block.
+                // This mock data simulates the structure the API should return.
+                let mockData = null;
+                if (mnv === 'NV001' && nam === '2025' && thang === '06') {
+                    mockData = {
+                        "mnv": "NV001",
+                        "hoTen": "Nguyễn Văn A",
+                        "phongBan": "Phòng Kinh doanh",
+                        "chucVu": "Nhân viên kinh doanh",
+                        "thang": "06",
+                        "nam": "2025",
+                        "ngayCong": 22,
+                        "luongCoBan": 10000000,
+                        "phuCap": 1500000,
+                        "thuong": 500000,
+                        "phat": 200000,
+                        "luongThucLanh": 11800000,
+                        "ghiChu": "Phiếu lương này chỉ có giá trị nội bộ. Vui lòng kiểm tra kỹ trước khi xác nhận."
+                    };
+                } else if (mnv === 'NV002' && nam === '2025' && thang === '06') {
+                    mockData = {
+                        "mnv": "NV002",
+                        "hoTen": "Trần Thị B",
+                        "phongBan": "Phòng Marketing",
+                        "chucVu": "Trưởng phòng",
+                        "thang": "06",
+                        "nam": "2025",
+                        "ngayCong": 20,
+                        "luongCoBan": 18000000,
+                        "phuCap": 2000000,
+                        "thuong": 1000000,
+                        "phat": 0,
+                        "luongThucLanh": 21000000,
+                        "ghiChu": "Đã hoàn thành tốt dự án X."
+                    };
+                }
+                // --- END OF DEMO/TESTING BLOCK ---
+
+                if (!mnv || !nam || !thang) {
+                    errorMessage.textContent = 'Vui lòng cung cấp Mã NV, Năm và Tháng trên URL (ví dụ: ?mnv=NV001&nam=2025&thang=06)';
+                    errorMessage.classList.remove('hidden');
+                    return;
+                }
+
+                loadingMessage.classList.remove('hidden'); // Show loading message
+                errorMessage.classList.add('hidden'); // Hide any previous errors
+                salaryItemsBody.innerHTML = ''; // Clear previous table data
+
+                let data = null;
+                try {
+                    // --- Uncomment the fetch block below when using your actual API ---
+                    // const response = await fetch(jsonApiUrl);
+                    // if (!response.ok) {
+                    //     throw new Error(`HTTP error! status: ${response.status}`);
+                    // }
+                    // data = await response.json();
+
+                    // --- For demo, use mockData instead of fetch ---
+                    data = mockData;
+                    if (!data) {
+                        throw new Error('Không tìm thấy dữ liệu cho Mã NV, Năm và Tháng này.');
+                    }
+                } catch (error) {
+                    console.error('Error fetching salary data:', error);
+                    errorMessage.textContent = `Lỗi: ${error.message}. Vui lòng kiểm tra lại Mã NV, Năm, Tháng hoặc URL API.`;
+                    errorMessage.classList.remove('hidden');
+                    loadingMessage.classList.add('hidden');
+                    return;
+                } finally {
+                    loadingMessage.classList.add('hidden'); // Hide loading message
+                }
+
+                // Populate header info
+                document.getElementById('month').textContent = data.thang || 'XX';
+                document.getElementById('year').textContent = data.nam || 'YYYY';
+                document.getElementById('employee-id').textContent = data.mnv || '';
+                document.getElementById('full-name').textContent = data.hoTen || '';
+                document.getElementById('department').textContent = data.phongBan || '';
+                document.getElementById('position').textContent = data.chucVu || '';
+
+                // Populate dynamic salary items
+                const salaryItems = [
+                    { label: 'Lương cơ bản', value: data.luongCoBan },
+                    { label: 'Phụ cấp', value: data.phuCap },
+                    { label: 'Thưởng', value: data.thuong },
+                    { label: 'Phạt', value: data.phat }
+                ];
+
+                salaryItems.forEach((item, index) => {
+                    const row = salaryItemsBody.insertRow();
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.label}</td>
+                        <td class="text-right">${formatCurrency(item.value)}</td>
+                    `;
+                });
+
+                // Populate net salary and other details
+                document.getElementById('net-salary').textContent = formatCurrency(data.luongThucLanh);
+                document.getElementById('work-days').textContent = data.ngayCong || '';
+                document.getElementById('notes').textContent = data.ghiChu || 'Phiếu lương này chỉ có giá trị nội bộ.';
+            }
+
+            fetchSalaryData(); // Call the function to load data when the page loads
+        });
     </script>
 </body>
 </html>
