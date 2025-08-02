@@ -1,165 +1,84 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hóa Đơn Bán Hàng Cửa Hàng ABC</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f4f7f6;
-        }
-        .invoice-container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 40px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e2e8f0;
-        }
-        table th, table td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #e2e8f0;
-            text-align: left;
-        }
-        table thead th {
-            background-color: #edf2f7;
-            font-weight: 600;
-            color: #4a5568;
-        }
-        table tbody tr:last-child td {
-            border-bottom: none;
-        }
-        /* No need for .total-row as specific classes are used now */
-    </style>
+  <meta charset="UTF-8">
+  <title>Tra cứu dữ liệu bán hàng</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .loading {
+      font-style: italic;
+      color: gray;
+    }
+  </style>
 </head>
-<body class="p-4 sm:p-6 md:p-8">
-    <div class="invoice-container">
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 pb-6 border-b border-gray-200">
-            <div>
-                <h1 class="text-4xl font-extrabold text-blue-700 mb-2">HÓA ĐƠN BÁN HÀNG</h1>
-                <p class="text-gray-600">Ngày lập: <span id="invoiceDate">24/06/2025</span></p>
-                <p class="text-gray-600">Mã số hóa đơn: <span id="invoiceNumber">INV-20250624-001</span></p>
-            </div>
-            <div class="mt-6 md:mt-0 text-right">
-                <p class="text-xl font-bold text-gray-800">Cửa hàng ABC</p>
-                <p class="text-gray-600">123 Đường XYZ, Quận 1</p>
-                <p class="text-gray-600">TP.HCM, Việt Nam</p>
-                <p class="text-gray-600">Điện thoại: (028) 1234 5678</p>
-                <p class="text-gray-600">Email: lienhe@cuahangabc.com</p>
-            </div>
-        </div>
+<body>
 
-        <!-- Customer Details -->
-        <div class="mb-8">
-            <h2 class="text-lg font-bold text-gray-700 mb-3">Thông tin khách hàng:</h2>
-            <p class="text-gray-700 font-semibold">Nguyễn Văn A</p>
-            <p class="text-gray-600">456 Đường PQR, Quận 2</p>
-            <p class="text-gray-600">TP.HCM, Việt Nam</p>
-            <p class="text-gray-600">Điện thoại: 0912 345 678</p>
-            <p class="text-gray-600">Email: nguyen.vana@example.com</p>
-        </div>
+  <h2>Dữ liệu bán hàng</h2>
+  <div class="loading" id="loading">Đang tải dữ liệu...</div>
+  <table id="data-table" style="display: none;">
+    <thead>
+      <tr id="header-row"></tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
 
-        <!-- Items Table -->
-        <div class="mb-10 overflow-x-auto rounded-lg shadow-sm border border-gray-200">
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-100 rounded-tl-lg">STT</th>
-                        <th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-100">Tên sản phẩm</th>
-                        <th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-100 text-center">Số lượng</th>
-                        <th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-100 text-right">Đơn giá</th>
-                        <th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-100 text-right rounded-tr-lg">Thành tiền</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="py-3 px-4 text-gray-700">1</td>
-                        <td class="py-3 px-4 text-gray-700">Laptop Dell XPS 15</td>
-                        <td class="py-3 px-4 text-gray-700 text-center">1</td>
-                        <td class="py-3 px-4 text-gray-700 text-right">25.000.000 VNĐ</td>
-                        <td class="py-3 px-4 text-gray-700 text-right">25.000.000 VNĐ</td>
-                    </tr>
-                    <tr>
-                        <td class="py-3 px-4 text-gray-700">2</td>
-                        <td class="py-3 px-4 text-gray-700">Bàn phím cơ Logitech G Pro X</td>
-                        <td class="py-3 px-4 text-gray-700 text-center">1</td>
-                        <td class="py-3 px-4 text-gray-700 text-right">3.500.000 VNĐ</td>
-                        <td class="py-3 px-4 text-gray-700 text-right">3.500.000 VNĐ</td>
-                    </tr>
-                    <tr>
-                        <td class="py-3 px-4 text-gray-700">3</td>
-                        <td class="py-3 px-4 text-gray-700">Dịch vụ cài đặt phần mềm</td>
-                        <td class="py-3 px-4 text-gray-700 text-center">1</td>
-                        <td class="py-3 px-4 text-gray-700 text-right">500.000 VNĐ</td>
-                        <td class="py-3 px-4 text-gray-700 text-right">500.000 VNĐ</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+  <script>
+    const url = "https://script.google.com/macros/s/AKfycbxqWVBEtubmt3qe20hs6swV79oSFU63pM12oT-Gd9VcFxODOlAqPEEfUQslZswqdHIj/exec";
 
-        <!-- Combined Totals, Payment Details & QR Code Section -->
-        <div class="flex flex-col lg:flex-row justify-between items-start gap-8 mb-8 pt-6 border-t border-gray-200">
-            <!-- Left column for Totals -->
-            <div class="w-full lg:w-1/2">
-                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 w-full">
-                    <div class="flex justify-between mb-2">
-                        <span class="text-gray-700">Tổng cộng:</span>
-                        <span class="font-semibold text-gray-800 text-base">29.000.000 VNĐ</span>
-                    </div>
-                    <div class="flex justify-between mb-2">
-                        <span class="text-gray-700">Giảm giá:</span>
-                        <span class="font-semibold text-red-600 text-base">0 VNĐ</span>
-                    </div>
-                    <div class="flex justify-between mb-4 pb-2 border-b border-gray-300">
-                        <span class="text-gray-700">Thuế (10%):</span>
-                        <span class="font-semibold text-gray-800 text-base">2.900.000 VNĐ</span>
-                    </div>
-                    <div class="flex justify-between text-lg font-bold text-blue-700">
-                        <span>TỔNG TIỀN THANH TOÁN:</span>
-                        <span>31.900.000 VNĐ</span>
-                    </div>
-                </div>
-            </div>
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (!data || data.length === 0) {
+          document.getElementById("loading").textContent = "Không có dữ liệu.";
+          return;
+        }
 
-            <!-- Right column for Payment Details & QR Code -->
-            <div class="w-full lg:w-1/2 flex flex-col sm:flex-row justify-between items-start gap-8 mt-6 lg:mt-0">
-                <!-- Payment Details -->
-                <div class="w-full sm:w-1/2">
-                    <h2 class="text-lg font-bold text-gray-700 mb-3">Thanh toán đến:</h2>
-                    <p class="text-gray-700 font-semibold">Cửa hàng ABC</p>
-                    <p class="text-gray-600">Ngân hàng: Techcombank</p>
-                    <p class="text-gray-600">Số tài khoản: 1903 0000 1234 56</p>
-                    <p class="text-gray-600">Mã số thuế: 0312345678</p>
-                </div>
-                <!-- QR Code Section -->
-                <div class="w-full sm:w-1/2 flex flex-col items-center justify-center">
-                    <h2 class="text-lg font-bold text-gray-700 mb-3">Thanh toán nhanh bằng QR Code:</h2>
-                    <img src="https://placehold.co/150x150/000000/FFFFFF?text=QR+Code" alt="Mã QR thanh toán" class="w-24 h-24 rounded-md shadow-md"> <!-- Smaller QR code -->
-                    <p class="text-gray-600 text-sm mt-2">Quét mã QR để thanh toán hoặc xem thông tin chi tiết.</p>
-                </div>
-            </div>
-        </div>
+        const headers = Object.keys(data[0]);
+        const headerRow = document.getElementById("header-row");
+        const tableBody = document.getElementById("table-body");
 
-        <!-- Notes Section -->
-        <div class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h2 class="text-lg font-bold text-gray-700 mb-3">Ghi chú:</h2>
-            <p class="text-gray-600 text-sm">
-                Quý khách vui lòng kiểm tra kỹ thông tin sản phẩm và số tiền thanh toán.
-                Để biết thêm chi tiết hoặc cần hỗ trợ, xin vui lòng liên hệ bộ phận chăm sóc khách hàng của chúng tôi.
-            </p>
-        </div>
+        // Thêm tiêu đề bảng
+        headers.forEach(header => {
+          const th = document.createElement("th");
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
 
-        <!-- Footer Section -->
-        <div class="text-center text-gray-600 text-sm mt-10 pt-6 border-t border-gray-200">
-            <p>Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của chúng tôi!</p>
-            <p>Vui lòng thanh toán trước ngày <span class="font-semibold">24/07/2025</span>.</p>
-            <p>Mọi thắc mắc xin vui lòng liên hệ.</p>
-        </div>
-    </div>
+        // Thêm dòng dữ liệu
+        data.forEach(row => {
+          const tr = document.createElement("tr");
+          headers.forEach(header => {
+            const td = document.createElement("td");
+            td.textContent = row[header];
+            tr.appendChild(td);
+          });
+          tableBody.appendChild(tr);
+        });
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("data-table").style.display = "table";
+      })
+      .catch(error => {
+        document.getElementById("loading").textContent = "Lỗi tải dữ liệu.";
+        console.error(error);
+      });
+  </script>
+
 </body>
 </html>
