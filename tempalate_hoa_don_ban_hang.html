@@ -62,6 +62,9 @@
         .table-responsive {
             margin-top: 20px;
         }
+        #data-table th, #data-table td {
+            text-align: center;
+        }
         #data-table th {
             background-color: #f8f9fa;
         }
@@ -99,13 +102,13 @@
                         </div>
                         <div class="col-md-6 col-lg-3">
                             <label for="productSelect" class="form-label">Sản phẩm:</label>
-                            <select id="productSelect" class="form-select">
+                            <select id="productSelect" class="form-select" multiple size="3">
                                 <option value="">Tất cả</option>
                             </select>
                         </div>
                         <div class="col-md-6 col-lg-3">
                             <label for="staffSelect" class="form-label">Nhân viên:</label>
-                            <select id="staffSelect" class="form-select">
+                            <select id="staffSelect" class="form-select" multiple size="3">
                                 <option value="">Tất cả</option>
                             </select>
                         </div>
@@ -196,6 +199,9 @@
     
     // Hàm tiện ích để định dạng số
     function formatNumber(number) {
+        if (number === null || number === undefined || isNaN(number)) {
+            return '';
+        }
         return new Intl.NumberFormat('vi-VN').format(number);
     }
 
@@ -279,9 +285,10 @@
             headers.forEach(h => {
                 const td = document.createElement("td");
                 let cellText = row[h];
-                if (h === "Giá" || h === "Số lượng" || h === "Thành tiền" || h === "Tiền mặt" || h === "Chuyển khoản") {
-                    if (!isNaN(cellText) && cellText !== null && cellText !== undefined) {
-                        cellText = formatNumber(cellText);
+                const numericColumns = ["Giá", "Số lượng", "Thành tiền", "Tiền mặt", "Chuyển khoản", "Giảm giá"];
+                if (numericColumns.includes(h)) {
+                    if (!isNaN(parseFloat(cellText))) {
+                        cellText = formatNumber(parseFloat(cellText));
                     }
                 }
                 td.textContent = cellText;
@@ -414,8 +421,8 @@
                     label: 'Tỷ lệ thanh toán',
                     data: [cashTotal, transferTotal],
                     backgroundColor: [
-                        'rgba(40, 167, 69, 0.6)', // Màu xanh lá cho Tiền mặt
-                        'rgba(0, 123, 255, 0.6)' // Màu xanh dương cho Chuyển khoản
+                        'rgba(40, 167, 69, 0.6)',
+                        'rgba(0, 123, 255, 0.6)'
                     ],
                     borderColor: [
                         'rgba(40, 167, 69, 1)',
@@ -446,8 +453,12 @@
     function applyFilters() {
         const fromDateStr = document.getElementById("fromDate").value;
         const toDateStr = document.getElementById("toDate").value;
-        const productSearch = document.getElementById("productSelect").value;
-        const staffSearch = document.getElementById("staffSelect").value;
+        
+        const productSelect = document.getElementById("productSelect");
+        const selectedProducts = Array.from(productSelect.options).filter(option => option.selected && option.value !== "").map(option => option.value);
+
+        const staffSelect = document.getElementById("staffSelect");
+        const selectedStaff = Array.from(staffSelect.options).filter(option => option.selected && option.value !== "").map(option => option.value);
 
         const filtered = rawData.filter(row => {
             const rowDate = parseDate(row["Ngày bán"]);
@@ -456,8 +467,8 @@
             const toDate = toDateStr ? parseDate(toDateStr) : null;
 
             const inDateRange = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
-            const matchProduct = !productSearch || row["Tên sản phẩm"] === productSearch;
-            const matchStaff = !staffSearch || row["Nhân viên bán"] === staffSearch;
+            const matchProduct = selectedProducts.length === 0 || selectedProducts.includes(row["Tên sản phẩm"]);
+            const matchStaff = selectedStaff.length === 0 || selectedStaff.includes(row["Nhân viên bán"]);
 
             return inDateRange && matchProduct && matchStaff;
         });
@@ -471,6 +482,18 @@
         toDateInstance.clear();
         document.getElementById("productSelect").value = "";
         document.getElementById("staffSelect").value = "";
+        
+        // Bỏ chọn tất cả các option
+        const productOptions = document.getElementById("productSelect").options;
+        for (let i = 0; i < productOptions.length; i++) {
+            productOptions[i].selected = false;
+        }
+
+        const staffOptions = document.getElementById("staffSelect").options;
+        for (let i = 0; i < staffOptions.length; i++) {
+            staffOptions[i].selected = false;
+        }
+
         applyFilters();
     }
 
