@@ -33,7 +33,7 @@
             border-radius: 12px 12px 0 0;
             padding: 1rem;
         }
-        .btn-primary, .btn-secondary {
+        .btn {
             border-radius: 8px;
             font-weight: 500;
         }
@@ -44,6 +44,14 @@
         .btn-primary:hover {
             background-color: #0056b3;
             border-color: #004085;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
         }
         .form-control, .form-select {
             border-radius: 8px;
@@ -94,8 +102,9 @@
                                 <option value="">Tất cả</option>
                             </select>
                         </div>
-                        <div class="col-12 col-lg-2 text-md-end">
-                            <button class="btn btn-primary w-100" onclick="applyFilters()">Lọc</button>
+                        <div class="col-12 col-lg-2 text-md-end d-flex gap-2">
+                            <button class="btn btn-primary flex-grow-1" onclick="applyFilters()">Lọc</button>
+                            <button class="btn btn-secondary flex-grow-1" onclick="resetFilters()">Bỏ lọc</button>
                         </div>
                     </div>
 
@@ -154,11 +163,11 @@
     const url = "https://script.google.com/macros/s/AKfycbxqWVBEtubmt3qe20hs6swV79oSFU63pM12oT-Gd9VcFxODOlAqPEEfUQslZswqdHIj/exec";
     let rawData = [];
     let productChart, staffChart;
+    let fromDateInstance, toDateInstance;
 
     // Khởi tạo Flatpickr
-    flatpickr("#fromDate, #toDate", {
-        dateFormat: "d-m-Y"
-    });
+    fromDateInstance = flatpickr("#fromDate", { dateFormat: "d-m-Y" });
+    toDateInstance = flatpickr("#toDate", { dateFormat: "d-m-Y" });
 
     // Fetch dữ liệu và khởi tạo
     fetch(url)
@@ -166,11 +175,12 @@
         .then(data => {
             rawData = data;
             
-            // Format ngày từ yyyy-mm-dd sang dd-mm-yyyy và bỏ giờ
+            // Format ngày từ yyyy-mm-ddT... sang dd-mm-yyyy và bỏ giờ
             rawData.forEach(row => {
                 const date = row["Ngày bán"];
                 if (date) {
-                    const dateParts = date.split('T')[0].split('-');
+                    const datePart = date.split('T')[0];
+                    const dateParts = datePart.split('-');
                     row["Ngày bán"] = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
                 }
             });
@@ -240,7 +250,6 @@
     }
 
     function createCharts(data) {
-        // Tổng hợp dữ liệu cho biểu đồ
         const productSales = {};
         const staffSales = {};
         data.forEach(row => {
@@ -248,13 +257,12 @@
             const quantity = parseInt(row["Số lượng"]);
             const product = row["Tên sản phẩm"];
             const staff = row["Nhân viên bán"];
-            const total = price * quantity;
+            const total = (price && quantity) ? price * quantity : 0;
             
             if (product) productSales[product] = (productSales[product] || 0) + total;
             if (staff) staffSales[staff] = (staffSales[staff] || 0) + total;
         });
 
-        // Cập nhật hoặc khởi tạo biểu đồ
         if (productChart) productChart.destroy();
         const ctxProduct = document.getElementById('productChart').getContext('2d');
         productChart = new Chart(ctxProduct, {
@@ -285,7 +293,9 @@
                         'rgba(255, 99, 132, 0.6)',
                         'rgba(54, 162, 235, 0.6)',
                         'rgba(255, 206, 86, 0.6)',
-                        'rgba(75, 192, 192, 0.6)'
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(255, 159, 64, 0.6)'
                     ]
                 }]
             },
@@ -300,13 +310,14 @@
         const staffSearch = document.getElementById("staffSelect").value;
 
         const filtered = rawData.filter(row => {
-            const dateParts = row["Ngày bán"].split('-');
-            const date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+            const dateStr = row["Ngày bán"];
+            const dateParts = dateStr.split('-');
+            const rowDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
 
             const fromDate = fromDateStr ? new Date(fromDateStr.split('-')[2], fromDateStr.split('-')[1] - 1, fromDateStr.split('-')[0]) : null;
             const toDate = toDateStr ? new Date(toDateStr.split('-')[2], toDateStr.split('-')[1] - 1, toDateStr.split('-')[0]) : null;
 
-            const inDateRange = (!fromDate || date >= fromDate) && (!toDate || date <= toDate);
+            const inDateRange = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
             const matchProduct = !productSearch || row["Tên sản phẩm"] === productSearch;
             const matchStaff = !staffSearch || row["Nhân viên bán"] === staffSearch;
 
@@ -315,6 +326,14 @@
 
         buildTable(filtered);
         createCharts(filtered);
+    }
+    
+    function resetFilters() {
+        fromDateInstance.clear();
+        toDateInstance.clear();
+        document.getElementById("productSelect").value = "";
+        document.getElementById("staffSelect").value = "";
+        applyFilters();
     }
 
     function exportToExcel() {
