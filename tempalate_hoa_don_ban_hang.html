@@ -2,35 +2,39 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Tra cứu dữ liệu bán hàng</title>
+  <title>Tra cứu bán hàng</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 6px 10px;
-      text-align: left;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-    .loading {
-      font-style: italic;
-      color: gray;
-    }
+    body { font-family: Arial; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .filters { margin-bottom: 20px; }
+    .filters label { margin-right: 10px; }
+    .filters input, .filters select { margin-right: 20px; padding: 4px 6px; }
+    .buttons { margin-top: 10px; }
+    .buttons button { margin-right: 10px; padding: 6px 12px; }
   </style>
 </head>
 <body>
 
-  <h2>Dữ liệu bán hàng</h2>
-  <div class="loading" id="loading">Đang tải dữ liệu...</div>
+  <h2>📊 Tra cứu dữ liệu bán hàng</h2>
+
+  <div class="filters">
+    <label>Từ ngày: <input type="date" id="fromDate"></label>
+    <label>Đến ngày: <input type="date" id="toDate"></label>
+    <label>Sản phẩm: <input type="text" id="productSearch" placeholder="Tên sản phẩm..."></label>
+    <label>Nhân viên: <input type="text" id="staffSearch" placeholder="Nhân viên bán..."></label>
+    <button onclick="applyFilters()">Lọc</button>
+  </div>
+
+  <div class="buttons">
+    <button onclick="exportToExcel()">📥 Xuất Excel</button>
+    <button onclick="exportToPDF()">📄 Xuất PDF</button>
+  </div>
+
+  <div id="loading" class="loading">Đang tải dữ liệu...</div>
   <table id="data-table" style="display: none;">
     <thead>
       <tr id="header-row"></tr>
@@ -40,45 +44,97 @@
 
   <script>
     const url = "https://script.google.com/macros/s/AKfycbxqWVBEtubmt3qe20hs6swV79oSFU63pM12oT-Gd9VcFxODOlAqPEEfUQslZswqdHIj/exec";
+    let rawData = [];
 
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        if (!data || data.length === 0) {
-          document.getElementById("loading").textContent = "Không có dữ liệu.";
-          return;
-        }
-
-        const headers = Object.keys(data[0]);
-        const headerRow = document.getElementById("header-row");
-        const tableBody = document.getElementById("table-body");
-
-        // Thêm tiêu đề bảng
-        headers.forEach(header => {
-          const th = document.createElement("th");
-          th.textContent = header;
-          headerRow.appendChild(th);
-        });
-
-        // Thêm dòng dữ liệu
-        data.forEach(row => {
-          const tr = document.createElement("tr");
-          headers.forEach(header => {
-            const td = document.createElement("td");
-            td.textContent = row[header];
-            tr.appendChild(td);
-          });
-          tableBody.appendChild(tr);
-        });
-
+        rawData = data;
+        buildTable(data);
         document.getElementById("loading").style.display = "none";
         document.getElementById("data-table").style.display = "table";
-      })
-      .catch(error => {
-        document.getElementById("loading").textContent = "Lỗi tải dữ liệu.";
-        console.error(error);
       });
+
+    function buildTable(data) {
+      const headers = Object.keys(data[0]);
+      const headerRow = document.getElementById("header-row");
+      const tableBody = document.getElementById("table-body");
+      headerRow.innerHTML = "";
+      tableBody.innerHTML = "";
+
+      headers.forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        headerRow.appendChild(th);
+      });
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        headers.forEach(h => {
+          const td = document.createElement("td");
+          td.textContent = row[h];
+          tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function applyFilters() {
+      const fromDate = document.getElementById("fromDate").value;
+      const toDate = document.getElementById("toDate").value;
+      const productSearch = document.getElementById("productSearch").value.toLowerCase();
+      const staffSearch = document.getElementById("staffSearch").value.toLowerCase();
+
+      const filtered = rawData.filter(row => {
+        const date = row["Ngày bán"];
+        const product = row["Tên sản phẩm"].toLowerCase();
+        const staff = row["Nhân viên bán"].toLowerCase();
+
+        const inDateRange = (!fromDate || date >= fromDate) && (!toDate || date <= toDate);
+        const matchProduct = !productSearch || product.includes(productSearch);
+        const matchStaff = !staffSearch || staff.includes(staffSearch);
+
+        return inDateRange && matchProduct && matchStaff;
+      });
+
+      buildTable(filtered);
+    }
+
+    function exportToExcel() {
+      const table = document.getElementById("data-table");
+      const wb = XLSX.utils.table_to_book(table, { sheet: "Dữ liệu bán hàng" });
+      XLSX.writeFile(wb, "du_lieu_ban_hang.xlsx");
+    }
+
+    async function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("Dữ liệu bán hàng", 14, 14);
+      const table = document.getElementById("data-table");
+
+      let rows = [];
+      const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.textContent);
+      const dataRows = table.querySelectorAll("tbody tr");
+
+      dataRows.forEach(tr => {
+        const row = Array.from(tr.querySelectorAll("td")).map(td => td.textContent);
+        rows.push(row);
+      });
+
+      doc.autoTable({
+        head: [headers],
+        body: rows,
+        startY: 20,
+        styles: { fontSize: 8 },
+        theme: 'grid'
+      });
+
+      doc.save("du_lieu_ban_hang.pdf");
+    }
   </script>
+
+  <!-- AutoTable plugin cho PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.33/jspdf.plugin.autotable.min.js"></script>
 
 </body>
 </html>
