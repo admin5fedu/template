@@ -69,6 +69,13 @@
             width: 3rem;
             height: 3rem;
         }
+        /* CSS cho các cột thanh toán */
+        .th-cash, .td-cash {
+            background-color: #d1e7dd; /* Màu xanh lá nhạt cho tiền mặt */
+        }
+        .th-transfer, .td-transfer {
+            background-color: #cfe2ff; /* Màu xanh dương nhạt cho chuyển khoản */
+        }
     </style>
 </head>
 <body>
@@ -169,6 +176,18 @@
     fromDateInstance = flatpickr("#fromDate", { dateFormat: "d-m-Y" });
     toDateInstance = flatpickr("#toDate", { dateFormat: "d-m-Y" });
 
+    // Hàm tiện ích để chuyển đổi chuỗi ngày dd-mm-yyyy thành đối tượng Date
+    function parseDate(dateStr) {
+        if (!dateStr) return new Date(0);
+        const parts = dateStr.split('-');
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+    
+    // Hàm tiện ích để định dạng số
+    function formatNumber(number) {
+        return new Intl.NumberFormat('vi-VN').format(number);
+    }
+
     // Fetch dữ liệu và khởi tạo
     fetch(url)
         .then(res => res.json())
@@ -185,12 +204,9 @@
                 }
             });
 
-            // Populate các dropdown
+            // Populate các dropdown và hiển thị dữ liệu ban đầu
             populateDropdowns(rawData);
-            
-            // Xây dựng bảng và biểu đồ lần đầu
-            buildTable(rawData);
-            createCharts(rawData);
+            applyFilters();
             document.getElementById("loading").style.display = "none";
             document.getElementById("data-table").style.display = "table";
         })
@@ -221,6 +237,9 @@
     }
 
     function buildTable(data) {
+        // Sắp xếp dữ liệu theo ngày bán (giảm dần) trước khi hiển thị
+        data.sort((a, b) => parseDate(b["Ngày bán"]) - parseDate(a["Ngày bán"]));
+
         const tableBody = document.getElementById("table-body");
         tableBody.innerHTML = "";
         
@@ -232,9 +251,15 @@
         const headers = Object.keys(data[0]);
         const headerRow = document.getElementById("header-row");
         headerRow.innerHTML = "";
+        
         headers.forEach(h => {
             const th = document.createElement("th");
             th.textContent = h;
+            if (h === "Tiền mặt") {
+                th.classList.add("th-cash");
+            } else if (h === "Chuyển khoản") {
+                th.classList.add("th-transfer");
+            }
             headerRow.appendChild(th);
         });
 
@@ -242,7 +267,18 @@
             const tr = document.createElement("tr");
             headers.forEach(h => {
                 const td = document.createElement("td");
-                td.textContent = row[h];
+                let cellText = row[h];
+                if (h === "Giá" || h === "Số lượng" || h === "Thành tiền" || h === "Tiền mặt" || h === "Chuyển khoản") {
+                    if (!isNaN(cellText) && cellText !== null && cellText !== undefined) {
+                        cellText = formatNumber(cellText);
+                    }
+                }
+                td.textContent = cellText;
+                if (h === "Tiền mặt") {
+                    td.classList.add("td-cash");
+                } else if (h === "Chuyển khoản") {
+                    td.classList.add("td-transfer");
+                }
                 tr.appendChild(td);
             });
             tableBody.appendChild(tr);
@@ -277,7 +313,35 @@
                     borderWidth: 1
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value, index, values) {
+                                return formatNumber(value);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += formatNumber(context.parsed.y) + ' VND';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         if (staffChart) staffChart.destroy();
@@ -299,7 +363,26 @@
                     ]
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += formatNumber(context.parsed) + ' VND';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
         });
     }
 
@@ -310,12 +393,10 @@
         const staffSearch = document.getElementById("staffSelect").value;
 
         const filtered = rawData.filter(row => {
-            const dateStr = row["Ngày bán"];
-            const dateParts = dateStr.split('-');
-            const rowDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+            const rowDate = parseDate(row["Ngày bán"]);
 
-            const fromDate = fromDateStr ? new Date(fromDateStr.split('-')[2], fromDateStr.split('-')[1] - 1, fromDateStr.split('-')[0]) : null;
-            const toDate = toDateStr ? new Date(toDateStr.split('-')[2], toDateStr.split('-')[1] - 1, toDateStr.split('-')[0]) : null;
+            const fromDate = fromDateStr ? parseDate(fromDateStr) : null;
+            const toDate = toDateStr ? parseDate(toDateStr) : null;
 
             const inDateRange = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
             const matchProduct = !productSearch || row["Tên sản phẩm"] === productSearch;
