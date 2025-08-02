@@ -1,559 +1,84 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tra Cứu Dữ Liệu Bán Hàng</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.33/jspdf.plugin.autotable.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/css/bootstrap-multiselect.css" />
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/js/bootstrap-multiselect.min.js"></script>
-
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f0f2f5;
-        }
-        .container-fluid {
-            padding-top: 20px;
-        }
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            background-color: #ffffff;
-        }
-        .card-header {
-            background-color: #007bff;
-            color: white;
-            font-weight: bold;
-            border-radius: 12px 12px 0 0;
-            padding: 1rem;
-        }
-        .btn {
-            border-radius: 8px;
-            font-weight: 500;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #004085;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-        .form-control, .form-select {
-            border-radius: 8px;
-        }
-        .chart-container {
-            height: 300px;
-        }
-        .table-responsive {
-            margin-top: 20px;
-        }
-        #data-table th, #data-table td {
-            text-align: center;
-            vertical-align: middle;
-        }
-        #data-table th {
-            background-color: #f8f9fa;
-        }
-        /* CSS cho các cột thanh toán */
-        .th-cash, .td-cash {
-            background-color: #d1e7dd; /* Màu xanh lá nhạt cho tiền mặt */
-        }
-        .th-transfer, .td-transfer {
-            background-color: #cfe2ff; /* Màu xanh dương nhạt cho chuyển khoản */
-        }
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
-        /* Style cho multiselect dropdown */
-        .multiselect-container {
-            width: 100%;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Tra cứu dữ liệu bán hàng</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .loading {
+      font-style: italic;
+      color: gray;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header text-center">
-                    <h2>📊 Tra Cứu Dữ Liệu Bán Hàng</h2>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3 align-items-end mb-4">
-                        <div class="col-md-3 col-lg-2">
-                            <label for="fromDate" class="form-label">Từ ngày:</label>
-                            <input type="text" id="fromDate" class="form-control" placeholder="dd-mm-yyyy">
-                        </div>
-                        <div class="col-md-3 col-lg-2">
-                            <label for="toDate" class="form-label">Đến ngày:</label>
-                            <input type="text" id="toDate" class="form-control" placeholder="dd-mm-yyyy">
-                        </div>
-                        <div class="col-md-6 col-lg-3">
-                            <label for="productSelect" class="form-label">Sản phẩm:</label>
-                            <select id="productSelect" class="form-control" multiple="multiple">
-                                <option value="" selected>Tất cả</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 col-lg-3">
-                            <label for="staffSelect" class="form-label">Nhân viên:</label>
-                            <select id="staffSelect" class="form-control" multiple="multiple">
-                                <option value="" selected>Tất cả</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-lg-2 text-md-end d-flex gap-2">
-                            <button class="btn btn-primary flex-grow-1" onclick="applyFilters()">Lọc</button>
-                            <button class="btn btn-secondary flex-grow-1" onclick="resetFilters()">Bỏ lọc</button>
-                        </div>
-                    </div>
+  <h2>Dữ liệu bán hàng</h2>
+  <div class="loading" id="loading">Đang tải dữ liệu...</div>
+  <table id="data-table" style="display: none;">
+    <thead>
+      <tr id="header-row"></tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
 
-                    <div class="row mb-4">
-                        <div class="col-12 text-end">
-                            <button class="btn btn-secondary me-2" onclick="exportToExcel()">📥 Xuất Excel</button>
-                            <button class="btn btn-secondary" onclick="exportToPDF()">📄 Xuất PDF</button>
-                        </div>
-                    </div>
-                    
-                    <div class="row mt-4">
-                        <div class="col-lg-6">
-                            <div class="card p-3 mb-4">
-                                <h5 class="card-title text-center">Doanh Thu Theo Sản Phẩm</h5>
-                                <div class="chart-container">
-                                    <canvas id="productChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="card p-3 mb-4">
-                                <h5 class="card-title text-center">Doanh Thu Theo Nhân Viên</h5>
-                                <div class="chart-container">
-                                    <canvas id="staffChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mt-4">
-                        <div class="col-lg-6 offset-lg-3">
-                            <div class="card p-3 mb-4">
-                                <h5 class="card-title text-center">Tỷ Lệ Thanh Toán</h5>
-                                <div class="chart-container">
-                                    <canvas id="paymentChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <div id="loading" class="text-center my-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Đang tải dữ liệu...</span>
-                        </div>
-                        <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table id="data-table" class="table table-striped table-hover" style="display: none;">
-                            <thead class="table-light">
-                                <tr id="header-row"></tr>
-                            </thead>
-                            <tbody id="table-body"></tbody>
-                        </table>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+  <script>
     const url = "https://script.google.com/macros/s/AKfycbxqWVBEtubmt3qe20hs6swV79oSFU63pM12oT-Gd9VcFxODOlAqPEEfUQslZswqdHIj/exec";
-    let rawData = [];
-    let productChart, staffChart, paymentChart;
-    let fromDateInstance, toDateInstance;
 
-    $(document).ready(function() {
-        // Khởi tạo Flatpickr
-        fromDateInstance = flatpickr("#fromDate", { dateFormat: "d-m-Y" });
-        toDateInstance = flatpickr("#toDate", { dateFormat: "d-m-Y" });
-        
-        // Fetch dữ liệu và khởi tạo
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                rawData = data;
-                
-                // Format ngày từ yyyy-mm-ddT... sang dd-mm-yyyy và bỏ giờ
-                rawData.forEach(row => {
-                    const date = row["Ngày bán"];
-                    if (date) {
-                        const datePart = date.split('T')[0];
-                        const dateParts = datePart.split('-');
-                        row["Ngày bán"] = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-                    }
-                });
-
-                // Populate các dropdown và hiển thị dữ liệu ban đầu
-                populateDropdowns(rawData);
-                applyFilters(); // Hiển thị dữ liệu ban đầu
-                document.getElementById("loading").style.display = "none";
-                document.getElementById("data-table").style.display = "table";
-            })
-            .catch(error => {
-                console.error("Lỗi khi tải dữ liệu:", error);
-                document.getElementById("loading").innerHTML = '<p class="text-danger">Không thể tải dữ liệu. Vui lòng thử lại sau.</p>';
-            });
-    });
-
-    // Hàm tiện ích để chuyển đổi chuỗi ngày dd-mm-yyyy thành đối tượng Date
-    function parseDate(dateStr) {
-        if (!dateStr) return new Date(0);
-        const parts = dateStr.split('-');
-        return new Date(parts[2], parts[1] - 1, parts[0]);
-    }
-    
-    // Hàm tiện ích để định dạng số
-    function formatNumber(number) {
-        if (number === null || number === undefined || isNaN(number)) {
-            return '';
-        }
-        return new Intl.NumberFormat('vi-VN').format(number);
-    }
-
-    function populateDropdowns(data) {
-        const products = [...new Set(data.map(item => item["Tên sản phẩm"]))].filter(Boolean).sort();
-        const staff = [...new Set(data.map(item => item["Nhân viên bán"]))].filter(Boolean).sort();
-
-        const productSelect = $('#productSelect');
-        products.forEach(p => {
-            productSelect.append(`<option value="${p}">${p}</option>`);
-        });
-
-        const staffSelect = $('#staffSelect');
-        staff.forEach(s => {
-            staffSelect.append(`<option value="${s}">${s}</option>`);
-        });
-
-        productSelect.multiselect({
-            includeSelectAllOption: true,
-            buttonText: function(options, select) {
-                if (options.length === 0 || options.length === select.find('option').length) {
-                    return 'Tất cả sản phẩm';
-                }
-                else if (options.length > 3) {
-                    return options.length + ' sản phẩm được chọn!';
-                }
-                else {
-                    var labels = [];
-                    options.each(function() {
-                        if ($(this).attr('label') !== undefined) {
-                            labels.push($(this).attr('label'));
-                        }
-                        else {
-                            labels.push($(this).html());
-                        }
-                    });
-                    return labels.join(', ') + '';
-                }
-            }
-        });
-        
-        staffSelect.multiselect({
-            includeSelectAllOption: true,
-            buttonText: function(options, select) {
-                if (options.length === 0 || options.length === select.find('option').length) {
-                    return 'Tất cả nhân viên';
-                }
-                else if (options.length > 3) {
-                    return options.length + ' nhân viên được chọn!';
-                }
-                else {
-                    var labels = [];
-                    options.each(function() {
-                        if ($(this).attr('label') !== undefined) {
-                            labels.push($(this).attr('label'));
-                        }
-                        else {
-                            labels.push($(this).html());
-                        }
-                    });
-                    return labels.join(', ') + '';
-                }
-            }
-        });
-    }
-
-    function buildTable(data) {
-        // Sắp xếp dữ liệu theo ngày bán (giảm dần) trước khi hiển thị
-        data.sort((a, b) => parseDate(b["Ngày bán"]) - parseDate(a["Ngày bán"]));
-
-        const tableBody = document.getElementById("table-body");
-        tableBody.innerHTML = "";
-        
-        if (data.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Không có dữ liệu phù hợp</td></tr>';
-            return;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (!data || data.length === 0) {
+          document.getElementById("loading").textContent = "Không có dữ liệu.";
+          return;
         }
 
         const headers = Object.keys(data[0]);
         const headerRow = document.getElementById("header-row");
-        headerRow.innerHTML = "";
-        
-        headers.forEach(h => {
-            const th = document.createElement("th");
-            th.textContent = h;
-            if (h === "Tiền mặt") {
-                th.classList.add("th-cash");
-            } else if (h === "Chuyển khoản") {
-                th.classList.add("th-transfer");
-            }
-            headerRow.appendChild(th);
+        const tableBody = document.getElementById("table-body");
+
+        // Thêm tiêu đề bảng
+        headers.forEach(header => {
+          const th = document.createElement("th");
+          th.textContent = header;
+          headerRow.appendChild(th);
         });
 
+        // Thêm dòng dữ liệu
         data.forEach(row => {
-            const tr = document.createElement("tr");
-            headers.forEach(h => {
-                const td = document.createElement("td");
-                let cellText = row[h];
-                const numericColumns = ["Giá", "Số lượng", "Thành tiền", "Tiền mặt", "Chuyển khoản", "Giảm giá"];
-                if (numericColumns.includes(h)) {
-                    if (!isNaN(parseFloat(cellText))) {
-                        cellText = formatNumber(parseFloat(cellText));
-                    }
-                }
-                td.textContent = cellText;
-                if (h === "Tiền mặt") {
-                    td.classList.add("td-cash");
-                } else if (h === "Chuyển khoản") {
-                    td.classList.add("td-transfer");
-                }
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
-        });
-    }
-
-    function createCharts(data) {
-        const productSales = {};
-        const staffSales = {};
-        let cashTotal = 0;
-        let transferTotal = 0;
-
-        data.forEach(row => {
-            const price = parseFloat(row["Giá"]) || 0;
-            const quantity = parseInt(row["Số lượng"]) || 0;
-            const product = row["Tên sản phẩm"];
-            const staff = row["Nhân viên bán"];
-            const cash = parseFloat(row["Tiền mặt"]) || 0;
-            const transfer = parseFloat(row["Chuyển khoản"]) || 0;
-            
-            const total = price * quantity;
-            
-            if (product) productSales[product] = (productSales[product] || 0) + total;
-            if (staff) staffSales[staff] = (staffSales[staff] || 0) + total;
-
-            cashTotal += cash;
-            transferTotal += transfer;
+          const tr = document.createElement("tr");
+          headers.forEach(header => {
+            const td = document.createElement("td");
+            td.textContent = row[header];
+            tr.appendChild(td);
+          });
+          tableBody.appendChild(tr);
         });
 
-        if (productChart) productChart.destroy();
-        const ctxProduct = document.getElementById('productChart').getContext('2d');
-        productChart = new Chart(ctxProduct, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(productSales),
-                datasets: [{
-                    label: 'Doanh thu (VND)',
-                    data: Object.values(productSales),
-                    backgroundColor: 'rgba(0, 123, 255, 0.6)',
-                    borderColor: 'rgba(0, 123, 255, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        ticks: {
-                            callback: function(value, index, values) {
-                                return formatNumber(value);
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += formatNumber(context.parsed.y) + ' VND';
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        if (staffChart) staffChart.destroy();
-        const ctxStaff = document.getElementById('staffChart').getContext('2d');
-        staffChart = new Chart(ctxStaff, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(staffSales),
-                datasets: [{
-                    label: 'Doanh thu (VND)',
-                    data: Object.values(staffSales),
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.6)',
-                        'rgba(54, 162, 235, 0.6)',
-                        'rgba(255, 206, 86, 0.6)',
-                        'rgba(75, 192, 192, 0.6)',
-                        'rgba(153, 102, 255, 0.6)',
-                        'rgba(255, 159, 64, 0.6)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed !== null) {
-                                    label += formatNumber(context.parsed) + ' VND';
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        if (paymentChart) paymentChart.destroy();
-        const ctxPayment = document.getElementById('paymentChart').getContext('2d');
-        paymentChart = new Chart(ctxPayment, {
-            type: 'pie',
-            data: {
-                labels: ['Tiền mặt', 'Chuyển khoản'],
-                datasets: [{
-                    label: 'Tỷ lệ thanh toán',
-                    data: [cashTotal, transferTotal],
-                    backgroundColor: [
-                        'rgba(40, 167, 69, 0.6)',
-                        'rgba(0, 123, 255, 0.6)'
-                    ],
-                    borderColor: [
-                        'rgba(40, 167, 69, 1)',
-                        'rgba(0, 123, 255, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((sum, current) => sum + current, 0);
-                                const value = context.parsed;
-                                const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
-                                return `${context.label}: ${formatNumber(value)} VND (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function applyFilters() {
-        const fromDateStr = document.getElementById("fromDate").value;
-        const toDateStr = document.getElementById("toDate").value;
-        
-        const selectedProducts = $('#productSelect').val() || [];
-        const selectedStaff = $('#staffSelect').val() || [];
-
-        const filtered = rawData.filter(row => {
-            const rowDate = parseDate(row["Ngày bán"]);
-
-            const fromDate = fromDateStr ? parseDate(fromDateStr) : null;
-            const toDate = toDateStr ? parseDate(toDateStr) : null;
-
-            const inDateRange = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
-            const matchProduct = selectedProducts.length === 0 || selectedProducts.includes(row["Tên sản phẩm"]);
-            const matchStaff = selectedStaff.length === 0 || selectedStaff.includes(row["Nhân viên bán"]);
-
-            return inDateRange && matchProduct && matchStaff;
-        });
-
-        buildTable(filtered);
-        createCharts(filtered);
-    }
-    
-    function resetFilters() {
-        fromDateInstance.clear();
-        toDateInstance.clear();
-        $('#productSelect').multiselect('deselectAll', false);
-        $('#productSelect').multiselect('updateButtonText');
-        $('#staffSelect').multiselect('deselectAll', false);
-        $('#staffSelect').multiselect('updateButtonText');
-        applyFilters();
-    }
-
-    function exportToExcel() {
-        const table = document.getElementById("data-table");
-        const wb = XLSX.utils.table_to_book(table, { sheet: "Dữ liệu bán hàng" });
-        XLSX.writeFile(wb, "du_lieu_ban_hang.xlsx");
-    }
-
-    async function exportToPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.text("Báo cáo dữ liệu bán hàng", 14, 14);
-        const table = document.getElementById("data-table");
-        doc.autoTable({ html: table, startY: 20 });
-        doc.save("du_lieu_ban_hang.pdf");
-    }
-</script>
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("data-table").style.display = "table";
+      })
+      .catch(error => {
+        document.getElementById("loading").textContent = "Lỗi tải dữ liệu.";
+        console.error(error);
+      });
+  </script>
 
 </body>
 </html>
