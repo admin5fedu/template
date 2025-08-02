@@ -1,140 +1,337 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Tra cứu bán hàng</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    .filters { margin-bottom: 20px; }
-    .filters label { margin-right: 10px; }
-    .filters input, .filters select { margin-right: 20px; padding: 4px 6px; }
-    .buttons { margin-top: 10px; }
-    .buttons button { margin-right: 10px; padding: 6px 12px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tra Cứu Dữ Liệu Bán Hàng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.33/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f2f5;
+        }
+        .container-fluid {
+            padding-top: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: #ffffff;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            border-radius: 12px 12px 0 0;
+            padding: 1rem;
+        }
+        .btn-primary, .btn-secondary {
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+        }
+        .chart-container {
+            height: 300px;
+        }
+        .table-responsive {
+            margin-top: 20px;
+        }
+        #data-table th {
+            background-color: #f8f9fa;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
 </head>
 <body>
 
-  <h2>📊 Tra cứu dữ liệu bán hàng</h2>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h2>📊 Tra Cứu Dữ Liệu Bán Hàng</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 align-items-end mb-4">
+                        <div class="col-md-3 col-lg-2">
+                            <label for="fromDate" class="form-label">Từ ngày:</label>
+                            <input type="text" id="fromDate" class="form-control" placeholder="dd-mm-yyyy">
+                        </div>
+                        <div class="col-md-3 col-lg-2">
+                            <label for="toDate" class="form-label">Đến ngày:</label>
+                            <input type="text" id="toDate" class="form-control" placeholder="dd-mm-yyyy">
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <label for="productSelect" class="form-label">Sản phẩm:</label>
+                            <select id="productSelect" class="form-select">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <label for="staffSelect" class="form-label">Nhân viên:</label>
+                            <select id="staffSelect" class="form-select">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-lg-2 text-md-end">
+                            <button class="btn btn-primary w-100" onclick="applyFilters()">Lọc</button>
+                        </div>
+                    </div>
 
-  <div class="filters">
-    <label>Từ ngày: <input type="date" id="fromDate"></label>
-    <label>Đến ngày: <input type="date" id="toDate"></label>
-    <label>Sản phẩm: <input type="text" id="productSearch" placeholder="Tên sản phẩm..."></label>
-    <label>Nhân viên: <input type="text" id="staffSearch" placeholder="Nhân viên bán..."></label>
-    <button onclick="applyFilters()">Lọc</button>
-  </div>
+                    <div class="row mb-4">
+                        <div class="col-12 text-end">
+                            <button class="btn btn-secondary me-2" onclick="exportToExcel()">📥 Xuất Excel</button>
+                            <button class="btn btn-secondary" onclick="exportToPDF()">📄 Xuất PDF</button>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-lg-6">
+                            <div class="card p-3 mb-4">
+                                <h5 class="card-title text-center">Doanh Thu Theo Sản Phẩm</h5>
+                                <div class="chart-container">
+                                    <canvas id="productChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card p-3 mb-4">
+                                <h5 class="card-title text-center">Doanh Thu Theo Nhân Viên</h5>
+                                <div class="chart-container">
+                                    <canvas id="staffChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-  <div class="buttons">
-    <button onclick="exportToExcel()">📥 Xuất Excel</button>
-    <button onclick="exportToPDF()">📄 Xuất PDF</button>
-  </div>
+                    <hr class="my-4">
 
-  <div id="loading" class="loading">Đang tải dữ liệu...</div>
-  <table id="data-table" style="display: none;">
-    <thead>
-      <tr id="header-row"></tr>
-    </thead>
-    <tbody id="table-body"></tbody>
-  </table>
+                    <div id="loading" class="text-center my-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Đang tải dữ liệu...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                    </div>
 
-  <script>
+                    <div class="table-responsive">
+                        <table id="data-table" class="table table-striped table-hover" style="display: none;">
+                            <thead class="table-light">
+                                <tr id="header-row"></tr>
+                            </thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
     const url = "https://script.google.com/macros/s/AKfycbxqWVBEtubmt3qe20hs6swV79oSFU63pM12oT-Gd9VcFxODOlAqPEEfUQslZswqdHIj/exec";
     let rawData = [];
+    let productChart, staffChart;
 
+    // Khởi tạo Flatpickr
+    flatpickr("#fromDate, #toDate", {
+        dateFormat: "d-m-Y"
+    });
+
+    // Fetch dữ liệu và khởi tạo
     fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        rawData = data;
-        buildTable(data);
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("data-table").style.display = "table";
-      });
+        .then(res => res.json())
+        .then(data => {
+            rawData = data;
+            
+            // Format ngày từ yyyy-mm-dd sang dd-mm-yyyy và bỏ giờ
+            rawData.forEach(row => {
+                const date = row["Ngày bán"];
+                if (date) {
+                    const dateParts = date.split('T')[0].split('-');
+                    row["Ngày bán"] = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                }
+            });
+
+            // Populate các dropdown
+            populateDropdowns(rawData);
+            
+            // Xây dựng bảng và biểu đồ lần đầu
+            buildTable(rawData);
+            createCharts(rawData);
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("data-table").style.display = "table";
+        })
+        .catch(error => {
+            console.error("Lỗi khi tải dữ liệu:", error);
+            document.getElementById("loading").innerHTML = '<p class="text-danger">Không thể tải dữ liệu. Vui lòng thử lại sau.</p>';
+        });
+
+    function populateDropdowns(data) {
+        const products = [...new Set(data.map(item => item["Tên sản phẩm"]))].filter(Boolean);
+        const staff = [...new Set(data.map(item => item["Nhân viên bán"]))].filter(Boolean);
+
+        const productSelect = document.getElementById("productSelect");
+        products.forEach(p => {
+            const option = document.createElement("option");
+            option.value = p;
+            option.textContent = p;
+            productSelect.appendChild(option);
+        });
+
+        const staffSelect = document.getElementById("staffSelect");
+        staff.forEach(s => {
+            const option = document.createElement("option");
+            option.value = s;
+            option.textContent = s;
+            staffSelect.appendChild(option);
+        });
+    }
 
     function buildTable(data) {
-      const headers = Object.keys(data[0]);
-      const headerRow = document.getElementById("header-row");
-      const tableBody = document.getElementById("table-body");
-      headerRow.innerHTML = "";
-      tableBody.innerHTML = "";
+        const tableBody = document.getElementById("table-body");
+        tableBody.innerHTML = "";
+        
+        if (data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Không có dữ liệu phù hợp</td></tr>';
+            return;
+        }
 
-      headers.forEach(h => {
-        const th = document.createElement("th");
-        th.textContent = h;
-        headerRow.appendChild(th);
-      });
-
-      data.forEach(row => {
-        const tr = document.createElement("tr");
+        const headers = Object.keys(data[0]);
+        const headerRow = document.getElementById("header-row");
+        headerRow.innerHTML = "";
         headers.forEach(h => {
-          const td = document.createElement("td");
-          td.textContent = row[h];
-          tr.appendChild(td);
+            const th = document.createElement("th");
+            th.textContent = h;
+            headerRow.appendChild(th);
         });
-        tableBody.appendChild(tr);
-      });
+
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            headers.forEach(h => {
+                const td = document.createElement("td");
+                td.textContent = row[h];
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+        });
+    }
+
+    function createCharts(data) {
+        // Tổng hợp dữ liệu cho biểu đồ
+        const productSales = {};
+        const staffSales = {};
+        data.forEach(row => {
+            const price = parseFloat(row["Giá"]);
+            const quantity = parseInt(row["Số lượng"]);
+            const product = row["Tên sản phẩm"];
+            const staff = row["Nhân viên bán"];
+            const total = price * quantity;
+            
+            if (product) productSales[product] = (productSales[product] || 0) + total;
+            if (staff) staffSales[staff] = (staffSales[staff] || 0) + total;
+        });
+
+        // Cập nhật hoặc khởi tạo biểu đồ
+        if (productChart) productChart.destroy();
+        const ctxProduct = document.getElementById('productChart').getContext('2d');
+        productChart = new Chart(ctxProduct, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(productSales),
+                datasets: [{
+                    label: 'Doanh thu (VND)',
+                    data: Object.values(productSales),
+                    backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        if (staffChart) staffChart.destroy();
+        const ctxStaff = document.getElementById('staffChart').getContext('2d');
+        staffChart = new Chart(ctxStaff, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(staffSales),
+                datasets: [{
+                    label: 'Doanh thu (VND)',
+                    data: Object.values(staffSales),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)'
+                    ]
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
     }
 
     function applyFilters() {
-      const fromDate = document.getElementById("fromDate").value;
-      const toDate = document.getElementById("toDate").value;
-      const productSearch = document.getElementById("productSearch").value.toLowerCase();
-      const staffSearch = document.getElementById("staffSearch").value.toLowerCase();
+        const fromDateStr = document.getElementById("fromDate").value;
+        const toDateStr = document.getElementById("toDate").value;
+        const productSearch = document.getElementById("productSelect").value;
+        const staffSearch = document.getElementById("staffSelect").value;
 
-      const filtered = rawData.filter(row => {
-        const date = row["Ngày bán"];
-        const product = row["Tên sản phẩm"].toLowerCase();
-        const staff = row["Nhân viên bán"].toLowerCase();
+        const filtered = rawData.filter(row => {
+            const dateParts = row["Ngày bán"].split('-');
+            const date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
 
-        const inDateRange = (!fromDate || date >= fromDate) && (!toDate || date <= toDate);
-        const matchProduct = !productSearch || product.includes(productSearch);
-        const matchStaff = !staffSearch || staff.includes(staffSearch);
+            const fromDate = fromDateStr ? new Date(fromDateStr.split('-')[2], fromDateStr.split('-')[1] - 1, fromDateStr.split('-')[0]) : null;
+            const toDate = toDateStr ? new Date(toDateStr.split('-')[2], toDateStr.split('-')[1] - 1, toDateStr.split('-')[0]) : null;
 
-        return inDateRange && matchProduct && matchStaff;
-      });
+            const inDateRange = (!fromDate || date >= fromDate) && (!toDate || date <= toDate);
+            const matchProduct = !productSearch || row["Tên sản phẩm"] === productSearch;
+            const matchStaff = !staffSearch || row["Nhân viên bán"] === staffSearch;
 
-      buildTable(filtered);
+            return inDateRange && matchProduct && matchStaff;
+        });
+
+        buildTable(filtered);
+        createCharts(filtered);
     }
 
     function exportToExcel() {
-      const table = document.getElementById("data-table");
-      const wb = XLSX.utils.table_to_book(table, { sheet: "Dữ liệu bán hàng" });
-      XLSX.writeFile(wb, "du_lieu_ban_hang.xlsx");
+        const table = document.getElementById("data-table");
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Dữ liệu bán hàng" });
+        XLSX.writeFile(wb, "du_lieu_ban_hang.xlsx");
     }
 
     async function exportToPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.text("Dữ liệu bán hàng", 14, 14);
-      const table = document.getElementById("data-table");
-
-      let rows = [];
-      const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.textContent);
-      const dataRows = table.querySelectorAll("tbody tr");
-
-      dataRows.forEach(tr => {
-        const row = Array.from(tr.querySelectorAll("td")).map(td => td.textContent);
-        rows.push(row);
-      });
-
-      doc.autoTable({
-        head: [headers],
-        body: rows,
-        startY: 20,
-        styles: { fontSize: 8 },
-        theme: 'grid'
-      });
-
-      doc.save("du_lieu_ban_hang.pdf");
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("Báo cáo dữ liệu bán hàng", 14, 14);
+        const table = document.getElementById("data-table");
+        doc.autoTable({ html: table, startY: 20 });
+        doc.save("du_lieu_ban_hang.pdf");
     }
-  </script>
-
-  <!-- AutoTable plugin cho PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.33/jspdf.plugin.autotable.min.js"></script>
+</script>
 
 </body>
 </html>
