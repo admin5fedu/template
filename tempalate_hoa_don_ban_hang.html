@@ -65,16 +65,16 @@
         #data-table th {
             background-color: #f8f9fa;
         }
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
         /* CSS cho các cột thanh toán */
         .th-cash, .td-cash {
             background-color: #d1e7dd; /* Màu xanh lá nhạt cho tiền mặt */
         }
         .th-transfer, .td-transfer {
             background-color: #cfe2ff; /* Màu xanh dương nhạt cho chuyển khoản */
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
         }
     </style>
 </head>
@@ -141,6 +141,17 @@
                         </div>
                     </div>
 
+                    <div class="row mt-4">
+                        <div class="col-lg-6 offset-lg-3">
+                            <div class="card p-3 mb-4">
+                                <h5 class="card-title text-center">Tỷ Lệ Thanh Toán</h5>
+                                <div class="chart-container">
+                                    <canvas id="paymentChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <hr class="my-4">
 
                     <div id="loading" class="text-center my-5">
@@ -169,7 +180,7 @@
 <script>
     const url = "https://script.google.com/macros/s/AKfycbxqWVBEtubmt3qe20hs6swV79oSFU63pM12oT-Gd9VcFxODOlAqPEEfUQslZswqdHIj/exec";
     let rawData = [];
-    let productChart, staffChart;
+    let productChart, staffChart, paymentChart;
     let fromDateInstance, toDateInstance;
 
     // Khởi tạo Flatpickr
@@ -206,7 +217,7 @@
 
             // Populate các dropdown và hiển thị dữ liệu ban đầu
             populateDropdowns(rawData);
-            applyFilters();
+            applyFilters(); // Hiển thị dữ liệu ban đầu
             document.getElementById("loading").style.display = "none";
             document.getElementById("data-table").style.display = "table";
         })
@@ -288,15 +299,23 @@
     function createCharts(data) {
         const productSales = {};
         const staffSales = {};
+        let cashTotal = 0;
+        let transferTotal = 0;
+
         data.forEach(row => {
             const price = parseFloat(row["Giá"]);
             const quantity = parseInt(row["Số lượng"]);
             const product = row["Tên sản phẩm"];
             const staff = row["Nhân viên bán"];
             const total = (price && quantity) ? price * quantity : 0;
+            const cash = parseFloat(row["Tiền mặt"]) || 0;
+            const transfer = parseFloat(row["Chuyển khoản"]) || 0;
             
             if (product) productSales[product] = (productSales[product] || 0) + total;
             if (staff) staffSales[staff] = (staffSales[staff] || 0) + total;
+
+            cashTotal += cash;
+            transferTotal += transfer;
         });
 
         if (productChart) productChart.destroy();
@@ -378,6 +397,44 @@
                                     label += formatNumber(context.parsed) + ' VND';
                                 }
                                 return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (paymentChart) paymentChart.destroy();
+        const ctxPayment = document.getElementById('paymentChart').getContext('2d');
+        paymentChart = new Chart(ctxPayment, {
+            type: 'pie',
+            data: {
+                labels: ['Tiền mặt', 'Chuyển khoản'],
+                datasets: [{
+                    label: 'Tỷ lệ thanh toán',
+                    data: [cashTotal, transferTotal],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.6)', // Màu xanh lá cho Tiền mặt
+                        'rgba(0, 123, 255, 0.6)' // Màu xanh dương cho Chuyển khoản
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(0, 123, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((sum, current) => sum + current, 0);
+                                const value = context.parsed;
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                                return `${context.label}: ${formatNumber(value)} VND (${percentage}%)`;
                             }
                         }
                     }
