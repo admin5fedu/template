@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Tổng Hợp Điểm Danh</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 10px;
+        }
+
+        .a4-container {
+            width: 210mm;
+            min-height: 297mm;
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 15mm;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #4f46e5;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            color: #4f46e5;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 120px;
+            flex: 1;
+            position: relative;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+
+        .filter-group select, .filter-group input {
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 11px;
+            background: white;
+        }
+
+        .filter-group select:focus, .filter-group input:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .multi-select {
+            position: relative;
+        }
+
+        .multi-select-display {
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 11px;
+            background: white;
+            cursor: pointer;
+            min-height: 24px;
+            display: flex;
+            align-items: center;
+        }
+
+        .multi-select-display:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .multi-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .multi-select-dropdown.active {
+            display: block;
+        }
+
+        .multi-select-option {
+            padding: 6px 8px;
+            cursor: pointer;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .multi-select-option:hover {
+            background: #f3f4f6;
+        }
+
+        .multi-select-option input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .selected-items {
+            font-size: 10px;
+            color: #6b7280;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+        }
+
+        .attendance-table th,
+        .attendance-table td {
+            padding: 3px 2px;
+            text-align: center;
+            border: 0.5px solid #d1d5db;
+            line-height: 1.2;
+        }
+
+        .attendance-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .student-header {
+            background: #4f46e5 !important;
+            color: white !important;
+            width: 25px;
+            font-size: 8px;
+        }
+
+        .name-header {
+            background: #4f46e5 !important;
+            color: white !important;
+            width: 100px;
+            text-align: left !important;
+            padding-left: 6px !important;
+            font-size: 8px;
+        }
+
+        .day-header {
+            width: 14px;
+            font-size: 7px;
+            background: #e5e7eb !important;
+        }
+
+        .day-header.sunday {
+            background: #fecaca !important;
+            color: #dc2626 !important;
+            font-weight: bold;
+        }
+
+        .weekday-row th {
+            font-size: 6px;
+            padding: 1px;
+            background: #f3f4f6 !important;
+            color: #6b7280;
+        }
+
+        .weekday-row th.sunday {
+            background: #fee2e2 !important;
+            color: #dc2626 !important;
+            font-weight: bold;
+        }
+
+        .status-header {
+            width: 35px;
+            font-size: 7px;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            background: #f59e0b !important;
+            color: white !important;
+        }
+
+        .attendance-table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .attendance-table tbody tr:hover {
+            background-color: #f0f9ff;
+        }
+
+        .name-cell {
+            text-align: left !important;
+            padding-left: 6px !important;
+            font-weight: 500;
+            font-size: 8px;
+        }
+
+        .student-cell {
+            font-weight: 600;
+            font-size: 8px;
+        }
+
+        .attendance-cell {
+            font-weight: bold;
+            font-size: 8px;
+        }
+
+        .stat-cell {
+            font-weight: 600;
+            font-size: 8px;
+        }
+
+        /* Trạng thái điểm danh */
+        .late { background-color: #fef3c7 !important; color: #92400e; }
+        .ontime { background-color: #d1fae5 !important; color: #065f46; }
+        .temple { background-color: #e0e7ff !important; color: #3730a3; }
+        .leave { background-color: #fce7f3 !important; color: #be185d; }
+        .unauthorized { background-color: #fee2e2 !important; color: #dc2626; }
+        .absent { background-color: #f3f4f6 !important; color: #6b7280; }
+        .trial { background-color: #ecfdf5 !important; color: #047857; }
+        .quit { background-color: #1f2937 !important; color: #f9fafb; }
+
+        .legend {
+            margin-top: 10px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 8px;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 10px;
+            color: #374151;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 8px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            border: 0.5px solid #d1d5db;
+        }
+
+        .statistics {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 8px;
+        }
+
+        .stat-card {
+            text-align: center;
+            background: #f8fafc;
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .stat-number {
+            font-size: 16px;
+            font-weight: bold;
+            display: block;
+            color: #4f46e5;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .loading, .error {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 4px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .a4-container {
+                box-shadow: none;
+                width: 100%;
+                max-width: none;
+                padding: 10mm;
+            }
+            
+            .btn, .multi-select-dropdown {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .a4-container {
+                padding: 10px;
+                width: 100%;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+            
+            .attendance-table {
+                font-size: 8px;
+            }
+            
+            .legend-items {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="a4-container">
+        <div class="header">
+            <h1>📋 BẢNG TỔNG HỢP ĐIỂM DANH</h1>
+            <p>Hệ thống quản lý và theo dõi tình hình học tập</p>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="yearMonthFilter">Năm tháng</label>
+                <div class="multi-select" id="yearMonthMultiSelect">
+                    <div class="multi-select-display" tabindex="0">
+                        <span class="selected-items">Chọn năm tháng...</span>
+                    </div>
+                    <div class="multi-select-dropdown">
+                        <!-- Options will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label for="dojoFilter">Võ Đường</label>
+                <div class="multi-select" id="dojoMultiSelect">
+                    <div class="multi-select-display" tabindex="0">
+                        <span class="selected-items">Chọn võ đường...</span>
+                    </div>
+                    <div class="multi-select-dropdown">
+                        <!-- Options will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label for="studentFilter">Học Viên</label>
+                <div class="multi-select" id="studentMultiSelect">
+                    <div class="multi-select-display" tabindex="0">
+                        <span class="selected-items">Chọn học viên...</span>
+                    </div>
+                    <div class="multi-select-dropdown">
+                        <!-- Options will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="applyFilters()">🔍 Lọc</button>
+                    <button class="btn btn-success" onclick="loadData()">🔄 Tải</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="content">
+            <div class="loading">
+                <p>📊 Nhấn "Tải" để bắt đầu...</p>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-title">Chú thích:</div>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color late"></div>
+                    <span>Đến muộn</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color ontime"></div>
+                    <span>Đúng giờ</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color temple"></div>
+                    <span>Về chùa</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color leave"></div>
+                    <span>Nghỉ phép</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color unauthorized"></div>
+                    <span>Không phép</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color absent"></div>
+                    <span>Vắng mặt</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color trial"></div>
+                    <span>Học thử</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color quit"></div>
+                    <span>Nghỉ hẳn</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let originalData = [];
+        let filteredData = [];
+        let selectedYearMonths = [];
+        let selectedDojos = [];
+        let selectedStudents = [];
+
+        // Dữ liệu mẫu với trường yearMonth
+        const sampleData = [
+            {
+                id: 1,
+                name: "Nguyễn Văn An",
+                dojo: "Võ Đường Trung Tâm",
+                yearMonth: "2025-08",
+                "1": "C", "2": "M", "3": "C", "4": "V", "5": "C",
+                "6": "CH", "7": "C", "8": "P", "9": "C", "10": "M",
+                "11": "C", "12": "C", "13": "KP", "14": "C", "15": "T",
+                "16": "C", "17": "V", "18": "C", "19": "M", "20": "C",
+                "21": "CH", "22": "C", "23": "P", "24": "C", "25": "C",
+                "26": "M", "27": "C", "28": "V", "29": "C", "30": "C", "31": "C"
+            },
+            {
+                id: 2,
+                name: "Trần Thị Bình",
+                dojo: "Võ Đường Quận 1",
+                yearMonth: "2025-08",
+                "1": "M", "2": "C", "3": "M", "4": "C", "5": "CH",
+                "6": "C", "7": "V", "8": "C", "9": "P", "10": "C",
+                "11": "M", "12": "C", "13": "C", "14": "KP", "15": "C",
+                "16": "T", "17": "C", "18": "M", "19": "C", "20": "V",
+                "21": "C", "22": "CH", "23": "C", "24": "M", "25": "C",
+                "26": "C", "27": "P", "28": "C", "29": "M", "30": "C", "31": "C"
+            },
+            {
+                id: 3,
+                name: "Lê Minh Cường",
+                dojo: "Võ Đường Trung Tâm",
+                yearMonth: "2025-07",
+                "1": "C", "2": "C", "3": "CH", "4": "M", "5": "C",
+                "6": "V", "7": "C", "8": "C", "9": "KP", "10": "C",
+                "11": "T", "12": "M", "13": "C", "14": "C", "15": "P",
+                "16": "C", "17": "M", "18": "V", "19": "C", "20": "C",
+                "21": "C", "22": "M", "23": "CH", "24": "C", "25": "KP",
+                "26": "C", "27": "C", "28": "M", "29": "V", "30": "T", "31": "C"
+            },
+            {
+                id: 4,
+                name: "Phạm Thu Dung",
+                dojo: "Võ Đường Quận 7",
+                yearMonth: "2025-07",
+                "1": "T", "2": "C", "3": "C", "4": "CH", "5": "M",
+                "6": "C", "7": "P", "8": "C", "9": "V", "10": "C",
+                "11": "C", "12": "KP", "13": "M", "14": "C", "15": "C",
+                "16": "V", "17": "CH", "18": "C", "19": "C", "20": "M",
+                "21": "P", "22": "C", "23": "C", "24": "KP", "25": "C",
+                "26": "M", "27": "V", "28": "C", "29": "C", "30": "CH", "31": "C"
+            },
+            {
+                id: 5,
+                name: "Hoàng Văn Nam",
+                dojo: "Võ Đường Quận 1",
+                yearMonth: "2025-06",
+                "1": "C", "2": "CH", "3": "M", "4": "C", "5": "V",
+                "6": "T", "7": "C", "8": "KP", "9": "C", "10": "P",
+                "11": "V", "12": "C", "13": "CH", "14": "M", "15": "C",
+                "16": "C", "17": "KP", "18": "CH", "19": "V", "20": "C",
+                "21": "M", "22": "P", "23": "C", "24": "T", "25": "V",
+                "26": "CH", "27": "M", "28": "C", "29": "KP", "30": "C", "31": ""
+            }
+        ];
+
+        // Multi-select functionality
+        function initMultiSelect() {
+            const multiSelects = document.querySelectorAll('.multi-select');
+            
+            multiSelects.forEach(multiSelect => {
+                const display = multiSelect.querySelector('.multi-select-display');
+                const dropdown = multiSelect.querySelector('.multi-select-dropdown');
+                
+                display.addEventListener('click', () => {
+                    // Close other dropdowns
+                    multiSelects.forEach(ms => {
+                        if (ms !== multiSelect) {
+                            ms.querySelector('.multi-select-dropdown').classList.remove('active');
+                        }
+                    });
+                    
+                    dropdown.classList.toggle('active');
+                });
+                
+                display.addEventListener('blur', (e) => {
+                    setTimeout(() => {
+                        if (!dropdown.contains(document.activeElement)) {
+                            dropdown.classList.remove('active');
+                        }
+                    }, 100);
+                });
+            });
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.multi-select')) {
+                    multiSelects.forEach(ms => {
+                        ms.querySelector('.multi-select-dropdown').classList.remove('active');
+                    });
+                }
+            });
+        }
+
+        function updateMultiSelectDisplay(selectId, selectedItems, allItems) {
+            const display = document.querySelector(`#${selectId} .selected-items`);
+            
+            if (selectedItems.length === 0) {
+                display.textContent = getPlaceholderText(selectId);
+            } else if (selectedItems.length === allItems.length) {
+                display.textContent = 'Tất cả';
+            } else if (selectedItems.length <= 3) {
+                display.textContent = selectedItems.join(', ');
+            } else {
+                display.textContent = `${selectedItems.length} mục đã chọn`;
+            }
+        }
+
+        function getPlaceholderText(selectId) {
+            switch (selectId) {
+                case 'yearMonthMultiSelect': return 'Chọn năm tháng...';
+                case 'dojoMultiSelect': return 'Chọn võ đường...';
+                case 'studentMultiSelect': return 'Chọn học viên...';
+                default: return 'Chọn...';
+            }
+        }
+
+        function loadData() {
+            showLoading();
+            
+            setTimeout(() => {
+                originalData = [...sampleData];
+                filteredData = [...originalData];
+                
+                // Set default current year-month
+                const now = new Date();
+                const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                selectedYearMonths = [currentYearMonth];
+                
+                populateYearMonthFilter();
+                populateDojoFilter();
+                populateStudentFilter();
+                renderTable(filteredData);
+            }, 500);
+        }
+
+        function populateYearMonthFilter() {
+            const yearMonthSet = new Set();
+            originalData.forEach(student => {
+                if (student.yearMonth) yearMonthSet.add(student.yearMonth);
+            });
+            
+            const dropdown = document.querySelector('#yearMonthMultiSelect .multi-select-dropdown');
+            dropdown.innerHTML = '';
+            
+            // Sort from Z to A (newest first)
+            const sortedYearMonths = Array.from(yearMonthSet).sort().reverse();
+            
+            sortedYearMonths.forEach(yearMonth => {
+                const option = document.createElement('div');
+                option.className = 'multi-select-option';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = yearMonth;
+                checkbox.checked = selectedYearMonths.includes(yearMonth);
+                
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        if (!selectedYearMonths.includes(yearMonth)) {
+                            selectedYearMonths.push(yearMonth);
+                        }
+                    } else {
+                        selectedYearMonths = selectedYearMonths.filter(ym => ym !== yearMonth);
+                    }
+                    updateMultiSelectDisplay('yearMonthMultiSelect', selectedYearMonths.map(formatYearMonth), sortedYearMonths);
+                    populateStudentFilter(); // Update student filter when year-month changes
+                });
+                
+                const label = document.createElement('span');
+                label.textContent = formatYearMonth(yearMonth);
+                
+                option.appendChild(checkbox);
+                option.appendChild(label);
+                dropdown.appendChild(option);
+            });
+            
+            updateMultiSelectDisplay('yearMonthMultiSelect', selectedYearMonths.map(formatYearMonth), sortedYearMonths);
+        }
+
+        function formatYearMonth(yearMonth) {
+            const [year, month] = yearMonth.split('-');
+            return `${month}/${year}`;
+        }
+
+        function populateDojoFilter() {
+            const dojoSet = new Set();
+            originalData.forEach(student => {
+                if (student.dojo) dojoSet.add(student.dojo);
+            });
+            
+            const dropdown = document.querySelector('#dojoMultiSelect .multi-select-dropdown');
+            dropdown.innerHTML = '';
+            
+            const sortedDojos = Array.from(dojoSet).sort();
+            
+            sortedDojos.forEach(dojo => {
+                const option = document.createElement('div');
+                option.className = 'multi-select-option';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = dojo;
+                checkbox.checked = selectedDojos.includes(dojo);
+                
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        if (!selectedDojos.includes(dojo)) {
+                            selectedDojos.push(dojo);
+                        }
+                    } else {
+                        selectedDojos = selectedDojos.filter(d => d !== dojo);
+                    }
+                    updateMultiSelectDisplay('dojoMultiSelect', selectedDojos, sortedDojos);
+                    populateStudentFilter(); // Update student filter when dojo changes
+                });
+                
+                const label = document.createElement('span');
+                label.textContent = dojo;
+                
+                option.appendChild(checkbox);
+                option.appendChild(label);
+                dropdown.appendChild(option);
+            });
+            
+            updateMultiSelectDisplay('dojoMultiSelect', selectedDojos, sortedDojos);
+        }
+
+        function populateStudentFilter() {
+            // Filter students based on selected year-months and dojos
+            let studentsToShow = originalData;
+            
+            if (selectedYearMonths.length > 0) {
+                studentsToShow = studentsToShow.filter(student => 
+                    selectedYearMonths.includes(student.yearMonth)
+                );
+            }
+            
+            if (selectedDojos.length > 0) {
+                studentsToShow = studentsToShow.filter(student => 
+                    selectedDojos.includes(student.dojo)
+                );
+            }
+            
+            const studentSet = new Set();
+            studentsToShow.forEach(student => {
+                if (student.name) studentSet.add(student.name);
+            });
+            
+            const dropdown = document.querySelector('#studentMultiSelect .multi-select-dropdown');
+            dropdown.innerHTML = '';
+            
+            const sortedStudents = Array.from(studentSet).sort((a, b) => a.localeCompare(b, 'vi'));
+            
+            sortedStudents.forEach(studentName => {
+                const option = document.createElement('div');
+                option.className = 'multi-select-option';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = studentName;
+                checkbox.checked = selectedStudents.includes(studentName);
+                
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        if (!selectedStudents.includes(studentName)) {
+                            selectedStudents.push(studentName);
+                        }
+                    } else {
+                        selectedStudents = selectedStudents.filter(s => s !== studentName);
+                    }
+                    updateMultiSelectDisplay('studentMultiSelect', selectedStudents, sortedStudents);
+                });
+                
+                const label = document.createElement('span');
+                label.textContent = studentName;
+                
+                option.appendChild(checkbox);
+                option.appendChild(label);
+                dropdown.appendChild(option);
+            });
+            
+            updateMultiSelectDisplay('studentMultiSelect', selectedStudents, sortedStudents);
+        }
+
+        function applyFilters() {
+            filteredData = originalData.filter(student => {
+                let match = true;
+                
+                if (selectedYearMonths.length > 0 && !selectedYearMonths.includes(student.yearMonth)) {
+                    match = false;
+                }
+                if (selectedDojos.length > 0 && !selectedDojos.includes(student.dojo)) {
+                    match = false;
+                }
+                if (selectedStudents.length > 0 && !selectedStudents.includes(student.name)) {
+                    match = false;
+                }
+                
+                return match;
+            });
+
+            renderTable(filteredData);
+        }
+
+        function showLoading() {
+            document.getElementById('content').innerHTML = `
+                <div class="loading">
+                    <p>⏳ Đang tải dữ liệu...</p>
+                </div>
+            `;
+        }
+
+        function getWeekdayName(date) {
+            const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+            return weekdays[date.getDay()];
+        }
+
+        function renderTable(data) {
+            if (!Array.isArray(data) || data.length === 0) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <p>📭 Không có dữ liệu phù hợp với bộ lọc</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const dayHeaders = Array.from({length: 31}, (_,
