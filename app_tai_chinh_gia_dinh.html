@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Tài Chính Gia Đình</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .fade-in { animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 sticky top-0 z-50">
+        <div class="flex items-center justify-between">
+            <h1 class="text-xl font-bold">💰 Tài Chính Gia Đình</h1>
+            <button onclick="showProfile()" class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
+                👤
+            </button>
+        </div>
+        
+        <!-- Balance Card -->
+        <div class="mt-4 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+            <p class="text-sm opacity-90">Số dư hiện tại</p>
+            <p class="text-2xl font-bold" id="totalBalance">25,500,000 ₫</p>
+            <div class="flex justify-between mt-2 text-sm">
+                <span class="text-green-200">Thu: <span id="totalIncome">30,000,000 ₫</span></span>
+                <span class="text-red-200">Chi: <span id="totalExpense">4,500,000 ₫</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="p-4 pb-20">
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <button onclick="showAddTransaction('income')" class="bg-green-500 text-white p-4 rounded-xl flex items-center justify-center space-x-2 hover:bg-green-600 transition-colors">
+                <span class="text-xl">💰</span>
+                <span class="font-medium">Thêm Thu Nhập</span>
+            </button>
+            <button onclick="showAddTransaction('expense')" class="bg-red-500 text-white p-4 rounded-xl flex items-center justify-center space-x-2 hover:bg-red-600 transition-colors">
+                <span class="text-xl">💸</span>
+                <span class="font-medium">Thêm Chi Tiêu</span>
+            </button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">📊</span>
+                    <div>
+                        <p class="text-sm text-gray-600">Giao dịch tháng này</p>
+                        <p class="font-bold text-lg" id="monthlyTransactions">12</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">🎯</span>
+                    <div>
+                        <p class="text-sm text-gray-600">Ngân sách còn lại</p>
+                        <p class="font-bold text-lg text-green-600" id="remainingBudget">15,500,000 ₫</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="bg-white rounded-xl shadow-sm mb-6">
+            <div class="p-4 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-semibold text-gray-800">Giao Dịch Gần Đây</h2>
+                    <button onclick="showAllTransactions()" class="text-blue-600 text-sm">Xem tất cả</button>
+                </div>
+            </div>
+            <div id="recentTransactions" class="divide-y divide-gray-100">
+                <!-- Transactions will be populated here -->
+            </div>
+        </div>
+
+        <!-- Categories Overview -->
+        <div class="bg-white rounded-xl shadow-sm">
+            <div class="p-4 border-b border-gray-100">
+                <h2 class="font-semibold text-gray-800">Chi Tiêu Theo Danh Mục</h2>
+            </div>
+            <div id="categoryOverview" class="p-4">
+                <!-- Categories will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+        <div class="grid grid-cols-4 py-2">
+            <button onclick="showTab('home')" class="tab-btn active flex flex-col items-center py-2 px-1">
+                <span class="text-xl mb-1">🏠</span>
+                <span class="text-xs">Trang chủ</span>
+            </button>
+            <button onclick="showTab('transactions')" class="tab-btn flex flex-col items-center py-2 px-1">
+                <span class="text-xl mb-1">📝</span>
+                <span class="text-xs">Giao dịch</span>
+            </button>
+            <button onclick="showTab('budget')" class="tab-btn flex flex-col items-center py-2 px-1">
+                <span class="text-xl mb-1">🎯</span>
+                <span class="text-xs">Ngân sách</span>
+            </button>
+            <button onclick="showTab('reports')" class="tab-btn flex flex-col items-center py-2 px-1">
+                <span class="text-xl mb-1">📊</span>
+                <span class="text-xs">Báo cáo</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div id="addTransactionModal" class="fixed inset-0 bg-black/50 z-50 hidden">
+        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl slide-in">
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold" id="modalTitle">Thêm Giao Dịch</h3>
+                    <button onclick="hideAddTransaction()" class="p-2 hover:bg-gray-100 rounded-full">✕</button>
+                </div>
+                
+                <form onsubmit="addTransaction(event)" class="space-y-4">
+                    <input type="hidden" id="transactionType" value="">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Số tiền</label>
+                        <input type="number" id="amount" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Danh mục</label>
+                        <select id="category" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <!-- Options will be populated based on transaction type -->
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mô tả</label>
+                        <input type="text" id="description" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Nhập mô tả...">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ngày</label>
+                        <input type="date" id="date" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors">
+                        Thêm Giao Dịch
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Transactions Modal -->
+    <div id="allTransactionsModal" class="fixed inset-0 bg-white z-50 hidden">
+        <div class="p-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">Tất Cả Giao Dịch</h3>
+                <button onclick="hideAllTransactions()" class="p-2 hover:bg-gray-100 rounded-full">✕</button>
+            </div>
+            
+            <div class="mb-4">
+                <input type="text" id="searchTransactions" placeholder="Tìm kiếm giao dịch..." class="w-full p-3 border border-gray-300 rounded-xl" oninput="filterTransactions()">
+            </div>
+            
+            <div id="allTransactionsList" class="space-y-2">
+                <!-- All transactions will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        let transactions = [
+            { id: 1, type: 'income', amount: 25000000, category: 'Lương', description: 'Lương tháng 12', date: '2024-12-01', emoji: '💼' },
+            { id: 2, type: 'expense', amount: 2000000, category: 'Ăn uống', description: 'Mua sắm tạp hóa', date: '2024-12-02', emoji: '🛒' },
+            { id: 3, type: 'income', amount: 5000000, category: 'Thưởng', description: 'Thưởng cuối năm', date: '2024-12-03', emoji: '🎁' },
+            { id: 4, type: 'expense', amount: 1500000, category: 'Điện nước', description: 'Tiền điện tháng 12', date: '2024-12-04', emoji: '⚡' },
+            { id: 5, type: 'expense', amount: 800000, category: 'Xăng xe', description: 'Đổ xăng xe máy', date: '2024-12-05', emoji: '⛽' },
+            { id: 6, type: 'expense', amount: 200000, category: 'Giải trí', description: 'Xem phim', date: '2024-12-06', emoji: '🎬' }
+        ];
+
+        const categories = {
+            income: [
+                { value: 'Lương', emoji: '💼' },
+                { value: 'Thưởng', emoji: '🎁' },
+                { value: 'Đầu tư', emoji: '📈' },
+                { value: 'Khác', emoji: '💰' }
+            ],
+            expense: [
+                { value: 'Ăn uống', emoji: '🍽️' },
+                { value: 'Điện nước', emoji: '⚡' },
+                { value: 'Xăng xe', emoji: '⛽' },
+                { value: 'Giải trí', emoji: '🎬' },
+                { value: 'Mua sắm', emoji: '🛒' },
+                { value: 'Y tế', emoji: '🏥' },
+                { value: 'Giáo dục', emoji: '📚' },
+                { value: 'Khác', emoji: '💸' }
+            ]
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            updateDashboard();
+            renderRecentTransactions();
+            renderCategoryOverview();
+        });
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN').format(amount) + ' ₫';
+        }
+
+        function updateDashboard() {
+            const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const balance = totalIncome - totalExpense;
+
+            document.getElementById('totalBalance').textContent = formatCurrency(balance);
+            document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
+            document.getElementById('totalExpense').textContent = formatCurrency(totalExpense);
+            document.getElementById('monthlyTransactions').textContent = transactions.length;
+            document.getElementById('remainingBudget').textContent = formatCurrency(Math.max(0, 20000000 - totalExpense));
+        }
+
+        function renderRecentTransactions() {
+            const container = document.getElementById('recentTransactions');
+            const recent = transactions.slice(-5).reverse();
+            
+            container.innerHTML = recent.map(transaction => `
+                <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg">
+                            ${getCategoryEmoji(transaction.category)}
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">${transaction.description}</p>
+                            <p class="text-sm text-gray-500">${transaction.category} • ${formatDate(transaction.date)}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}">
+                            ${transaction.type === 'income' ? '+' : '-'}${formatCurrency(transaction.amount)}
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCategoryOverview() {
+            const container = document.getElementById('categoryOverview');
+            const expensesByCategory = {};
+            
+            transactions.filter(t => t.type === 'expense').forEach(t => {
+                expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
+            });
+
+            const totalExpenses = Object.values(expensesByCategory).reduce((sum, amount) => sum + amount, 0);
+
+            container.innerHTML = Object.entries(expensesByCategory)
+                .sort(([,a], [,b]) => b - a)
+                .map(([category, amount]) => {
+                    const percentage = totalExpenses > 0 ? (amount / totalExpenses * 100) : 0;
+                    return `
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center space-x-2">
+                                    <span>${getCategoryEmoji(category)}</span>
+                                    <span class="text-sm font-medium">${category}</span>
+                                </div>
+                                <span class="text-sm font-semibold">${formatCurrency(amount)}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${percentage}%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">${percentage.toFixed(1)}% tổng chi tiêu</p>
+                        </div>
+                    `;
+                }).join('');
+        }
+
+        function getCategoryEmoji(category) {
+            const allCategories = [...categories.income, ...categories.expense];
+            const found = allCategories.find(c => c.value === category);
+            return found ? found.emoji : '💰';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function showAddTransaction(type) {
+            const modal = document.getElementById('addTransactionModal');
+            const title = document.getElementById('modalTitle');
+            const typeInput = document.getElementById('transactionType');
+            const categorySelect = document.getElementById('category');
+
+            typeInput.value = type;
+            title.textContent = type === 'income' ? 'Thêm Thu Nhập' : 'Thêm Chi Tiêu';
+
+            // Populate categories
+            categorySelect.innerHTML = categories[type].map(cat => 
+                `<option value="${cat.value}">${cat.emoji} ${cat.value}</option>`
+            ).join('');
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideAddTransaction() {
+            const modal = document.getElementById('addTransactionModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            
+            // Reset form
+            document.querySelector('#addTransactionModal form').reset();
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        }
+
+        function addTransaction(event) {
+            event.preventDefault();
+            
+            const type = document.getElementById('transactionType').value;
+            const amount = parseInt(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const description = document.getElementById('description').value;
+            const date = document.getElementById('date').value;
+
+            const newTransaction = {
+                id: Date.now(),
+                type,
+                amount,
+                category,
+                description,
+                date,
+                emoji: getCategoryEmoji(category)
+            };
+
+            transactions.push(newTransaction);
+            
+            // Update UI
+            updateDashboard();
+            renderRecentTransactions();
+            renderCategoryOverview();
+            
+            hideAddTransaction();
+            
+            // Show success message
+            showToast(`Đã thêm ${type === 'income' ? 'thu nhập' : 'chi tiêu'} thành công!`);
+        }
+
+        function showAllTransactions() {
+            const modal = document.getElementById('allTransactionsModal');
+            const container = document.getElementById('allTransactionsList');
+            
+            renderAllTransactions();
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideAllTransactions() {
+            const modal = document.getElementById('allTransactionsModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function renderAllTransactions(filteredTransactions = null) {
+            const container = document.getElementById('allTransactionsList');
+            const transactionsToShow = filteredTransactions || [...transactions].reverse();
+            
+            container.innerHTML = transactionsToShow.map(transaction => `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-xl">
+                                ${getCategoryEmoji(transaction.category)}
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">${transaction.description}</p>
+                                <p class="text-sm text-gray-500">${transaction.category}</p>
+                                <p class="text-xs text-gray-400">${formatDate(transaction.date)}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-lg ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}">
+                                ${transaction.type === 'income' ? '+' : '-'}${formatCurrency(transaction.amount)}
+                            </p>
+                            <button onclick="deleteTransaction(${transaction.id})" class="text-red-500 text-sm hover:text-red-700 mt-1">
+                                🗑️ Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterTransactions() {
+            const searchTerm = document.getElementById('searchTransactions').value.toLowerCase();
+            const filtered = transactions.filter(t => 
+                t.description.toLowerCase().includes(searchTerm) ||
+                t.category.toLowerCase().includes(searchTerm)
+            );
+            renderAllTransactions(filtered.reverse());
+        }
+
+        function deleteTransaction(id) {
+            if (confirm('Bạn có chắc muốn xóa giao dịch này?')) {
+                transactions = transactions.filter(t => t.id !== id);
+                updateDashboard();
+                renderRecentTransactions();
+                renderCategoryOverview();
+                renderAllTransactions();
+                showToast('Đã xóa giao dịch thành công!');
+            }
+        }
+
+        function showTab(tabName) {
+            // Update active tab
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.tab-btn').classList.add('active');
+            
+            // Simple tab switching - in a real app, you'd show different content
+            showToast(`Chuyển đến tab ${tabName}`);
+        }
+
+        function showProfile() {
+            showToast('Tính năng hồ sơ đang được phát triển!');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-20 left-4 right-4 bg-green-600 text-white p-3 rounded-xl z-50 fade-in';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Add styles for active tab
+        const style = document.createElement('style');
+        style.textContent = `
+            .tab-btn.active {
+                color: #2563eb;
+                font-weight: 600;
+            }
+            .tab-btn {
+                color: #6b7280;
+                transition: color 0.2s;
+            }
+            .tab-btn:hover {
+                color: #374151;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9769463cf6511055',t:'MTc1NjQ0MTQyMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
