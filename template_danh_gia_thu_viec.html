@@ -379,6 +379,9 @@
         const form = event.target;
         const statusMessage = document.getElementById('statusMessage');
         const printButton = document.getElementById('printButton');
+        
+        // Vui lòng thay thế 'URL_CUA_BAN_O_DAY' bằng URL Web App của bạn
+        const scriptUrl = 'URL_CUA_BAN_O_DAY';
 
         // Reset messages and button visibility
         statusMessage.innerHTML = '';
@@ -414,18 +417,39 @@
             return;
         }
 
+        // Tạo đối tượng FormData từ form để gửi dữ liệu
         const formData = new FormData(form);
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbzusqFgRd0QpsBc47qUTrlb1dxWo2cS674Hi5wQa06uzWlLGi6aUegBq-L7X8oA77M/exec'; 
 
         statusMessage.innerHTML = '<span class="text-indigo-500">Đang gửi dữ liệu...</span>';
 
-        // Fake fetch to simulate sending data
-        setTimeout(() => {
-            statusMessage.innerHTML = '<span class="text-green-600">Gửi đánh giá thành công!</span>';
-            printButton.classList.remove('hidden');
-            // Reset form fields but not status message or print button
-            // form.reset(); 
-        }, 1000);
+        // Gửi dữ liệu bằng fetch API
+        fetch(scriptUrl, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Xử lý lỗi nếu phản hồi không thành công (ví dụ: lỗi mạng)
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Xử lý dữ liệu trả về từ Apps Script
+            if (data.success) {
+                statusMessage.innerHTML = '<span class="text-green-600">Gửi đánh giá thành công!</span>';
+                printButton.classList.remove('hidden');
+                // Có thể reset form tại đây nếu muốn
+                // form.reset(); 
+            } else {
+                statusMessage.innerHTML = '<span class="text-red-600">Lỗi khi gửi dữ liệu: ' + data.error + '</span>';
+            }
+        })
+        .catch(error => {
+            // Xử lý lỗi trong quá trình fetch
+            statusMessage.innerHTML = '<span class="text-red-600">Lỗi khi gửi dữ liệu. Vui lòng thử lại.</span>';
+            console.error('Error:', error);
+        });
     });
 </script>
 
